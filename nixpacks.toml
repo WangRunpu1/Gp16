@@ -1,0 +1,12 @@
+# Nixpacks build config for Railway
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm-9_x"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build", "cd apps/api && npx prisma migrate deploy && npm run seed && cd ../.."]
+
+[start]
+cmd = "node apps/api/dist/index.js"
