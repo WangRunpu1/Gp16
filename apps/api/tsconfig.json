@@ -7,5 +7,5 @@
       "@gp16/shared": ["../../packages/shared/src/index.ts"]
     }
   },
-  "include": ["src", "prisma"]
+  "include": ["src"]
 }
