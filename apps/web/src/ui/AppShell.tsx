@@ -1,6 +1,6 @@
 import { Button, Layout, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { clearToken } from '../api/client';
+import { clearToken } from '@/api/client';
 import { CanvasPage } from './CanvasPage';
 
 const { Header, Content } = Layout;

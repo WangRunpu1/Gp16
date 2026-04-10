@@ -2,9 +2,9 @@ import { Alert, Card, Collapse, Divider, InputNumber, Spin, Statistic, Tag, Typo
 import ReactECharts from 'echarts-for-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTopologyStore } from '../../state/topologyStore';
-import { useConfigStore } from '../../state/configStore';
-import { useDebouncedAnalysis } from '../../hooks/useDebouncedAnalysis';
+import { useTopologyStore } from '@/state/topologyStore';
+import { useConfigStore } from '@/state/configStore';
+import { useDebouncedAnalysis } from '@/hooks/useDebouncedAnalysis';
 
 export function AnalyticsPanel() {
   const { t } = useTranslation();

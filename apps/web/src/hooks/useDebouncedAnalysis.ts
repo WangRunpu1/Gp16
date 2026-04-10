@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useTopologyStore } from '../state/topologyStore';
-import { useConfigStore } from '../state/configStore';
-import { postJson } from '../api/client';
+import { useTopologyStore } from '@/state/topologyStore';
+import { useConfigStore } from '@/state/configStore';
+import { postJson } from '@/api/client';
 import type { AnalysisResponse } from '@gp16/shared';
 
 export function useDebouncedAnalysis(debounceMs = 1200) {

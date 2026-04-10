@@ -5,7 +5,7 @@ import ReactFlow, {
   type Connection, type Edge, type Node, type NodeChange, type EdgeChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useTopologyStore } from '../../state/topologyStore';
+import { useTopologyStore } from '@/state/topologyStore';
 import type { DeviceType } from '@gp16/shared';
 
 const COLORS: Record<DeviceType, string> = {

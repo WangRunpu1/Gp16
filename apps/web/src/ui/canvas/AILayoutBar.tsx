@@ -1,8 +1,8 @@
 import { Button, Input, message, Space, Tooltip } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTopologyStore } from '../../state/topologyStore';
-import { postJson, apiFetch } from '../../api/client';
+import { useTopologyStore } from '@/state/topologyStore';
+import { postJson, apiFetch } from '@/api/client';
 import type { AILayoutResult } from '@gp16/shared';
 
 export function AILayoutBar() {

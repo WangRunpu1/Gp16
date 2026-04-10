@@ -1,9 +1,9 @@
 import { Button, message } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTopologyStore } from '../../state/topologyStore';
-import { postJson, apiFetch } from '../../api/client';
-import { useDebouncedAnalysis } from '../../hooks/useDebouncedAnalysis';
+import { useTopologyStore } from '@/state/topologyStore';
+import { postJson, apiFetch } from '@/api/client';
+import { useDebouncedAnalysis } from '@/hooks/useDebouncedAnalysis';
 
 export function ReportButton() {
   const { t } = useTranslation();

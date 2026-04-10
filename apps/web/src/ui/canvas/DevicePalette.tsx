@@ -2,8 +2,8 @@ import { Button, Divider, InputNumber, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DeviceType, TopologyNode } from '@gp16/shared';
-import { nanoid } from '../utils/nanoid';
-import { useTopologyStore } from '../state/topologyStore';
+import { nanoid } from '@/utils/nanoid';
+import { useTopologyStore } from '@/state/topologyStore';
 
 type Item = { deviceType: DeviceType; labelKey: string; defaultKw?: number; defaultKwh?: number };
 
@@ -23,8 +23,8 @@ const COLORS: Record<DeviceType, string> = {
 
 export function DevicePalette() {
   const { t } = useTranslation();
-  const nodes = useTopologyStore((s: ReturnType<typeof useTopologyStore.getState>) => s.nodes);
-  const setNodes = useTopologyStore((s: ReturnType<typeof useTopologyStore.getState>) => s.setNodes);
+  const nodes = useTopologyStore((s: any) => s.nodes);
+  const setNodes = useTopologyStore((s: any) => s.setNodes);
 
   const [params, setParams] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};

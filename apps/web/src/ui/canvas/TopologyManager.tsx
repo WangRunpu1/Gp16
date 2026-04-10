@@ -1,8 +1,8 @@
 import { Button, Drawer, Input, List, message, Modal, Popconfirm, Space, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTopologyStore } from '../../state/topologyStore';
-import { apiFetch, postJson } from '../../api/client';
+import { useTopologyStore } from '@/state/topologyStore';
+import { apiFetch, postJson } from '@/api/client';
 import type { SavedTopology } from '@gp16/shared';
 
 export function TopologyManager() {

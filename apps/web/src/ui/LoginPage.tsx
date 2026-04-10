@@ -1,7 +1,7 @@
 import { Button, Form, Input, Card, Typography, message } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { postJson, setToken } from '../api/client';
+import { postJson, setToken } from '@/api/client';
 
 interface Props { onLogin: () => void; }
 
