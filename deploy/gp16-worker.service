@@ -1,0 +1,15 @@
+[Unit]
+Description=GP16 BullMQ Worker
+After=network.target redis.service
+
+[Service]
+Type=simple
+User=student
+WorkingDirectory=/opt/gp16/apps/worker
+EnvironmentFile=/opt/gp16/.env
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

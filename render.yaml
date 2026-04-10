@@ -1,0 +1,56 @@
+services:
+  # ── Web Service：API + 前端静态资源 ──────────────────────────────────────────
+  - type: web
+    name: gp16-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build && cd apps/api && npx prisma migrate deploy && npm run seed
+    startCommand: node apps/api/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gp16-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false          # 在 Render 控制台粘贴 Redis 内部 URL
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REPORT_DIR
+        value: /tmp/reports
+      - key: LLM_API_BASE
+        value: https://dashscope.aliyuncs.com/compatible-mode/v1
+      - key: LLM_API_KEY
+        sync: false          # ← 在 Render 控制台填写你的千问 API Key
+      - key: LLM_MODEL
+        value: qwen-plus
+
+  # ── Background Worker：AI布局 + PDF生成 ──────────────────────────────────────
+  - type: worker
+    name: gp16-worker
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node apps/worker/dist/index.js
+    envVars:
+      - key: REDIS_URL
+        sync: false          # 与 gp16-api 填同一个 Redis URL
+      - key: REPORT_DIR
+        value: /tmp/reports
+      - key: LLM_API_BASE
+        value: https://dashscope.aliyuncs.com/compatible-mode/v1
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: qwen-plus
+
+databases:
+  - name: gp16-db
+    databaseName: gp16
+    user: gp16
+    plan: free

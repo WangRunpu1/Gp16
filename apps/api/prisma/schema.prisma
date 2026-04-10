@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  password   String
+  role       String     @default("customer")
+  topologies Topology[]
+  createdAt  DateTime   @default(now())
+}
+
+model Topology {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodesJson String
+  edgesJson String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
