@@ -3,11 +3,7 @@
   "private": true,
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "build:shared": "npm run build -w @gp16/shared",
-    "build:web": "npm run build -w @gp16/web",
-    "build:api": "npm run build -w @gp16/api",
-    "build:worker": "npm run build -w @gp16/worker",
-    "build": "npm run build:shared && npm run build:web && npm run build:api && npm run build:worker",
+    "build": "npm run build -w @gp16/shared && npm run build -w @gp16/web",
     "seed": "npm run seed -w @gp16/api"
   }
 }

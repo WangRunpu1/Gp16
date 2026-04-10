@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "node build.mjs",
-    "start": "node dist/index.js",
+    "build": "echo 'no compile needed'",
+    "start": "tsx src/index.ts",
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
