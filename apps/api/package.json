@@ -2,13 +2,13 @@
   "name": "@gp16/api",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc --skipLibCheck",
+    "build": "node build.mjs",
     "start": "node dist/index.js",
     "seed": "tsx prisma/seed.ts"
   },
-  "type": "module",
   "dependencies": {
     "@fastify/cors": "^9.0.1",
     "@fastify/jwt": "^8.0.1",
@@ -17,6 +17,7 @@
     "@prisma/client": "^5.14.0",
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.12.0",
+    "esbuild": "^0.21.5",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
     "ioredis": "^5.4.1",
