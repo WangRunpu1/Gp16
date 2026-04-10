@@ -4,6 +4,7 @@ import jwt from '@fastify/jwt';
 import staticFiles from '@fastify/static';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 import prismaPlugin from './plugins/prisma.js';
 import queuePlugin from './plugins/queue.js';
@@ -13,7 +14,10 @@ import aiRoutes from './routes/ai.js';
 import reportRoutes from './routes/reports.js';
 import topologyRoutes from './routes/topologies.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Works in both ESM source and esbuild bundle
+const _require = createRequire(import.meta.url);
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
 
 const app = Fastify({ logger: true });
 
@@ -33,9 +37,11 @@ app.decorate('authenticate', async function (req: any, reply: any) {
 await app.register(prismaPlugin);
 await app.register(queuePlugin);
 
-// Serve frontend static files
-// __dirname = apps/api/dist, web dist is at apps/web/dist
-const webDist = path.resolve(__dirname, '../../../web/dist');
+// Serve frontend static files — resolve relative to this file's location
+// In production (esbuild bundle): dist/index.js → web/dist is at ../../web/dist
+const webDist = process.env.WEB_DIST
+  ?? path.resolve(_dirname, '../../web/dist');
+
 await app.register(staticFiles, { root: webDist, prefix: '/' });
 
 // API routes
