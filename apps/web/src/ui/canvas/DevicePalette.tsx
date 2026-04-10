@@ -23,8 +23,8 @@ const COLORS: Record<DeviceType, string> = {
 
 export function DevicePalette() {
   const { t } = useTranslation();
-  const nodes = useTopologyStore((s) => s.nodes);
-  const setNodes = useTopologyStore((s) => s.setNodes);
+  const nodes = useTopologyStore((s: ReturnType<typeof useTopologyStore.getState>) => s.nodes);
+  const setNodes = useTopologyStore((s: ReturnType<typeof useTopologyStore.getState>) => s.setNodes);
 
   const [params, setParams] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
