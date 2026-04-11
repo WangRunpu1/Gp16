@@ -21,7 +21,7 @@ export function AnalyticsPanel() {
       xAxis: { type: 'category', data: series.map((p) => `${p.year}`), name: t('years'), nameLocation: 'end' },
       yAxis: {
         type: 'value',
-        axisLabel: { formatter: (v: number) => v >= 10000 ? `${(v / 10000).toFixed(0)}万` : `${v}` },
+        axisLabel: { formatter: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}` },
       },
       series: [
         { name: t('traditional'), type: 'line', data: series.map((p) => p.traditionalCost), smooth: true, itemStyle: { color: '#1677ff' }, areaStyle: { opacity: 0.06 } },
@@ -49,7 +49,7 @@ export function AnalyticsPanel() {
               <Statistic title={`${t('pvInstalled')} (kW)`}   value={Number((data?.summary.pvInstalledKw ?? 0).toFixed(1))} />
               <Statistic title={`${t('annualGen')} (kWh)`}    value={data ? Math.round(data.summary.annualGenerationKwh).toLocaleString() : '-'} />
               <Statistic title={`${t('co2Saved')} (tCO₂)`}   value={data ? Number(data.summary.annualCo2SavedTons.toFixed(2)) : '-'} />
-              <Statistic title={`${t('trees')} (棵)`}         value={data ? Math.round(data.summary.equivalentTrees).toLocaleString() : '-'} />
+              <Statistic title={`${t('trees')}`}         value={data ? Math.round(data.summary.equivalentTrees).toLocaleString() : '-'} />
               <Statistic title={`${t('totalCapex')} (¥)`}     value={data ? `¥${Math.round(data.summary.totalCapex).toLocaleString()}` : '-'} />
             </div>
             <div style={{ marginTop: 10 }}>

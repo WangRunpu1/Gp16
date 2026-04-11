@@ -1,48 +1,52 @@
-import { Space } from 'antd';
-import { AILayoutBar } from './canvas/AILayoutBar';
-import { DevicePalette } from './canvas/DevicePalette';
+import { AIChatPanel } from './canvas/AIChatPanel';
+import { BottomToolbar } from './canvas/BottomToolbar';
 import { TopologyCanvas } from './canvas/TopologyCanvas';
 import { AnalyticsPanel } from './canvas/AnalyticsPanel';
-import { ReportButton } from './canvas/ReportButton';
 import { TopologyManager } from './canvas/TopologyManager';
+import { ReportButton } from './canvas/ReportButton';
+import { Space } from 'antd';
 
 export function CanvasPage() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
-      {/* AI bar */}
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid #e5e7eb', background: '#fafafa' }}>
-        <AILayoutBar />
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+
+      {/* Left: AI Chat Panel */}
+      <div style={{
+        width: 300, flexShrink: 0,
+        borderRight: '1px solid #e5e7eb',
+        display: 'flex', flexDirection: 'column',
+        background: '#fff',
+      }}>
+        <AIChatPanel />
       </div>
 
-      {/* Main 3-column layout */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Left: device palette */}
-        <div style={{
-          width: 210, flexShrink: 0, borderRight: '1px solid #e5e7eb',
-          overflowY: 'auto', background: '#fff',
-        }}>
-          <DevicePalette />
-          <div style={{ padding: '8px 10px', borderTop: '1px solid #f0f0f0' }}>
-            <Space direction="vertical" style={{ width: '100%' }} size={6}>
-              <TopologyManager />
-              <ReportButton />
-            </Space>
-          </div>
-        </div>
-
-        {/* Center: canvas */}
+      {/* Center: Canvas + Bottom Toolbar */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Canvas area */}
         <div style={{ flex: 1, position: 'relative', background: '#f8fafc' }}>
           <TopologyCanvas />
         </div>
 
-        {/* Right: analytics */}
-        <div style={{
-          width: 280, flexShrink: 0, borderLeft: '1px solid #e5e7eb',
-          overflowY: 'auto', background: '#fff',
-        }}>
-          <AnalyticsPanel />
+        {/* Bottom toolbar: manual device adding */}
+        <BottomToolbar />
+      </div>
+
+      {/* Right: Analytics Panel */}
+      <div style={{
+        width: 290, flexShrink: 0,
+        borderLeft: '1px solid #e5e7eb',
+        overflowY: 'auto', background: '#fff',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <AnalyticsPanel />
+        <div style={{ padding: '8px 10px', borderTop: '1px solid #f0f0f0', marginTop: 'auto' }}>
+          <Space direction="vertical" style={{ width: '100%' }} size={6}>
+            <TopologyManager />
+            <ReportButton />
+          </Space>
         </div>
       </div>
+
     </div>
   );
 }

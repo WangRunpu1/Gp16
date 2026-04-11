@@ -16,22 +16,29 @@ const BORDER: Record<DeviceType, string> = {
   pv_panel: '#faad14', inverter: '#1677ff', battery: '#52c41a',
   charger: '#eb2f96',  load: '#722ed1',     grid: '#fa8c16',
 };
+const ICONS: Record<DeviceType, string> = {
+  pv_panel: '☀️', inverter: '⚡', battery: '🔋',
+  charger: '🔌',  load: '🏭',     grid: '🔆',
+};
 
 function DeviceNode({ data }: { data: { label: string; deviceType: DeviceType } }) {
   const bg     = COLORS[data.deviceType] ?? '#f5f5f5';
   const border = BORDER[data.deviceType] ?? '#d9d9d9';
+  const icon   = ICONS[data.deviceType] ?? '📦';
   return (
     <div style={{
       padding: '8px 14px', borderRadius: 8, background: bg,
       border: `2px solid ${border}`, fontSize: 12, fontWeight: 500,
-      minWidth: 90, textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+      minWidth: 100, textAlign: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
     }}>
-      {data.label}
+      <div style={{ fontSize: 18, marginBottom: 2 }}>{icon}</div>
+      <div>{data.label}</div>
     </div>
   );
 }
 
-const nodeTypes = { default: DeviceNode };
+// IMPORTANT: define nodeTypes outside component to avoid re-registration bug
+const nodeTypes = { device: DeviceNode };
 
 export function TopologyCanvas() {
   const storeNodes = useTopologyStore((s) => s.nodes);
@@ -44,7 +51,7 @@ export function TopologyCanvas() {
       id: n.id,
       position: n.position,
       data: { label: n.data.label, deviceType: n.data.deviceType },
-      type: 'default',
+      type: 'device',
     })), [storeNodes]);
 
   const edges: Edge[] = useMemo(() =>
@@ -91,7 +98,9 @@ export function TopologyCanvas() {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         fitView
+        fitViewOptions={{ padding: 0.2 }}
         deleteKeyCode="Delete"
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
       >
         <MiniMap nodeColor={(n) => BORDER[(n.data as any)?.deviceType as DeviceType] ?? '#d9d9d9'} />
         <Controls />
