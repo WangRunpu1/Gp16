@@ -38,7 +38,6 @@ await app.register(prismaPlugin);
 await app.register(queuePlugin);
 
 // Serve frontend static files — resolve relative to this file's location
-// In production (esbuild bundle): dist/index.js → web/dist is at ../../web/dist
 const webDist = process.env.WEB_DIST
   ?? path.resolve(_dirname, '../../web/dist');
 
@@ -65,3 +64,8 @@ app.setNotFoundHandler(async (req, reply) => {
 const port = Number(process.env.PORT ?? 8080);
 await app.listen({ port, host: '0.0.0.0' });
 console.log(`[api] listening on :${port}`);
+
+// ── Inline Worker (runs in same process) ─────────────────────────────────────
+// This avoids needing a separate worker service on Render free tier
+import { startWorker } from './worker.js';
+startWorker();
