@@ -5,8 +5,11 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build && cd apps/api && npx prisma migrate deploy && npm run seed
-    startCommand: node apps/api/dist/index.js
+    buildCommand: >-
+      npm install &&
+      npm run build &&
+      cd apps/api && npx prisma migrate deploy && cd ../..
+    startCommand: npx tsx apps/api/src/index.ts
     envVars:
       - key: NODE_ENV
         value: production
@@ -17,7 +20,7 @@ services:
           name: gp16-db
           property: connectionString
       - key: REDIS_URL
-        sync: false          # 在 Render 控制台粘贴 Redis 内部 URL
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: REPORT_DIR
@@ -25,21 +28,21 @@ services:
       - key: LLM_API_BASE
         value: https://dashscope.aliyuncs.com/compatible-mode/v1
       - key: LLM_API_KEY
-        sync: false          # ← 在 Render 控制台填写你的千问 API Key
+        sync: false
       - key: LLM_MODEL
         value: qwen-plus
 
-  # ── Background Worker：AI布局 + PDF生成 ──────────────────────────────────────
+  # ── Background Worker：AI布局 + 报告生成 ──────────────────────────────────────
   - type: worker
     name: gp16-worker
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: node apps/worker/dist/index.js
+    buildCommand: npm install
+    startCommand: npx tsx apps/worker/src/index.ts
     envVars:
       - key: REDIS_URL
-        sync: false          # 与 gp16-api 填同一个 Redis URL
+        sync: false
       - key: REPORT_DIR
         value: /tmp/reports
       - key: LLM_API_BASE

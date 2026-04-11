@@ -1,7 +1,6 @@
 import { Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import { z } from 'zod';
-import { chromium } from 'playwright';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { DeviceType } from '@gp16/shared';
@@ -69,7 +68,7 @@ function heuristicLayout(prompt: string) {
 async function callLLM(prompt: string): Promise<unknown> {
   const base = process.env.LLM_API_BASE;
   const key  = process.env.LLM_API_KEY;
-  const model = process.env.LLM_MODEL ?? 'gpt-4o-mini';
+  const model = process.env.LLM_MODEL ?? 'qwen-plus';
   if (!base || !key) return null;
 
   const trimmed = base.endsWith('/') ? base.slice(0, -1) : base;
@@ -149,8 +148,8 @@ function topologyToSvg(topology: any): string {
 </svg>`;
 }
 
-// ── PDF report ────────────────────────────────────────────────────────────────
-async function generatePdf(payload: any): Promise<{ reportId: string; pdfPath: string }> {
+// ── HTML Report (no Playwright needed) ───────────────────────────────────────
+async function generateReport(payload: any): Promise<{ reportId: string; htmlPath: string }> {
   const reportId = String(payload.reportId ?? payload.taskId ?? Date.now());
   const topology = payload.topology ?? { nodes: [], edges: [] };
   const analysis = payload.analysis ?? null;
@@ -190,6 +189,7 @@ async function generatePdf(payload: any): Promise<{ reportId: string; pdfPath: s
   }).join('');
 
   const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>GP16 设计报告</title>
 <style>
   body{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;padding:32px;color:#111;font-size:13px;line-height:1.6}
   h1{font-size:20px;font-weight:700;margin:0 0 4px}
@@ -204,7 +204,11 @@ async function generatePdf(payload: any): Promise<{ reportId: string; pdfPath: s
   .kpi-label{font-size:11px;color:#6b7280}
   .kpi-val{font-size:18px;font-weight:700;color:#1677ff;margin-top:4px}
   svg{max-width:100%;height:auto}
+  @media print{body{padding:16px}.no-print{display:none}}
 </style></head><body>
+  <div class="no-print" style="margin-bottom:16px">
+    <button onclick="window.print()" style="padding:8px 20px;background:#1677ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ 打印 / 保存为 PDF</button>
+  </div>
   <h1>GP16 光伏/电力系统 AI 辅助设计报告</h1>
   <div class="sub">生成时间：${esc(new Date().toLocaleString('zh-CN'))}　报告编号：${esc(reportId)}</div>
   <div class="sec">系统拓扑图</div>
@@ -222,15 +226,10 @@ async function generatePdf(payload: any): Promise<{ reportId: string; pdfPath: s
 
   const outDir = process.env.REPORT_DIR ?? path.resolve(process.cwd(), 'data', 'reports');
   await fs.mkdir(outDir, { recursive: true });
-  const pdfPath = path.join(outDir, `${reportId}.pdf`);
+  const htmlPath = path.join(outDir, `${reportId}.html`);
+  await fs.writeFile(htmlPath, html, 'utf-8');
 
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'load' });
-  await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
-  await browser.close();
-
-  return { reportId, pdfPath };
+  return { reportId, htmlPath };
 }
 
 // ── Worker ────────────────────────────────────────────────────────────────────
@@ -253,7 +252,7 @@ const worker = new Worker('gp16-jobs', async (job) => {
   }
 
   if (job.name === 'report_generate') {
-    return generatePdf({ ...job.data as any, reportId: String(job.id) });
+    return generateReport({ ...job.data as any, reportId: String(job.id) });
   }
 
   throw new Error(`Unknown job: ${job.name}`);

@@ -5,5 +5,9 @@
   "scripts": {
     "build": "npm run build -w @gp16/shared && npm run build -w @gp16/web",
     "seed": "npm run seed -w @gp16/api"
+  },
+  "devDependencies": {
+    "tsx": "^4.15.7",
+    "typescript": "^5.4.0"
   }
 }
