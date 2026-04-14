@@ -4,6 +4,7 @@ import { TopologyCanvas } from './canvas/TopologyCanvas';
 import { AnalyticsPanel } from './canvas/AnalyticsPanel';
 import { TopologyManager } from './canvas/TopologyManager';
 import { ReportButton } from './canvas/ReportButton';
+import { NodeEditDrawer } from './canvas/NodeEditDrawer';
 import { Space } from 'antd';
 
 export function CanvasPage() {
@@ -22,12 +23,13 @@ export function CanvasPage() {
 
       {/* Center: Canvas + Bottom Toolbar */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Canvas area */}
-        <div style={{ flex: 1, position: 'relative', background: '#f8fafc' }}>
+        {/* Canvas area — position:relative so the Drawer anchors here */}
+        <div style={{ flex: 1, position: 'relative', background: '#f8fafc', overflow: 'hidden' }}>
           <TopologyCanvas />
+          <NodeEditDrawer />
         </div>
 
-        {/* Bottom toolbar: manual device adding */}
+        {/* Bottom toolbar */}
         <BottomToolbar />
       </div>
 

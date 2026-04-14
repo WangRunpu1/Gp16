@@ -8,6 +8,25 @@ export interface TopologyNode {
     deviceType: DeviceType;
     ratedPowerKw?: number;
     capacityKwh?: number;
+    // PV Panel
+    panelCount?: number;
+    efficiency?: number;
+    tiltAngle?: number;
+    azimuth?: number;
+    // Inverter
+    inverterType?: string;
+    // Battery
+    chemistry?: string;
+    cycleLife?: number;
+    // Charger
+    connectorType?: string;
+    chargerCount?: number;
+    // Load
+    loadType?: string;
+    dailyHours?: number;
+    // Grid
+    voltageKv?: number;
+    gridType?: string;
   };
 }
 
