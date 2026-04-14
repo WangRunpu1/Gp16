@@ -1,6 +1,7 @@
 import { Button, Divider, Drawer, InputNumber, Select, Space, Tag, Typography, message } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
 import { DEVICE_ICON } from './DeviceIcons';
 import type { DeviceType, TopologyNode } from '@gp16/shared';
@@ -9,9 +10,9 @@ const ACCENT: Record<DeviceType, string> = {
   pv_panel: '#faad14', inverter: '#1677ff', battery: '#52c41a',
   charger: '#eb2f96',  load: '#722ed1',     grid: '#fa8c16',
 };
-const LABEL: Record<DeviceType, string> = {
-  pv_panel: '光伏板', inverter: '逆变器', battery: '储能',
-  charger: '充电桩',  load: '负载',       grid: '电网',
+const LABEL_KEY: Record<DeviceType, string> = {
+  pv_panel: 'pvPanel', inverter: 'inverter', battery: 'battery',
+  charger: 'charger',  load: 'load',         grid: 'grid',
 };
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -47,52 +48,62 @@ function SelField({ label, value, opts, onChange }: {
   );
 }
 
-function NodeFields({ node, update }: { node: TopologyNode; update: (d: Partial<TopologyNode['data']>) => void }) {
+function NodeFields({ node, update, t }: {
+  node: TopologyNode;
+  update: (d: Partial<TopologyNode['data']>) => void;
+  t: (k: string) => string;
+}) {
   const d = node.data;
   const u = (k: keyof TopologyNode['data']) => (v: any) => update({ [k]: v });
 
   if (d.deviceType === 'pv_panel') return <>
-    <NumField label="额定功率 (kW)" value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
-    <NumField label="组件数量" value={d.panelCount} min={1} step={1} suffix="块" onChange={u('panelCount')} />
-    <NumField label="组件效率" value={d.efficiency} min={10} step={0.5} suffix="%" onChange={u('efficiency')} />
-    <NumField label="倾斜角度" value={d.tiltAngle} min={0} step={5} suffix="°" onChange={u('tiltAngle')} />
-    <NumField label="方位角" value={d.azimuth} min={0} step={10} suffix="°" onChange={u('azimuth')} />
+    <NumField label={`${t('ratedPower')} (kW)`}  value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
+    <NumField label={t('panelCount')}             value={d.panelCount}   min={1}   step={1}   suffix={t('panelCountUnit')} onChange={u('panelCount')} />
+    <NumField label={t('efficiency')}             value={d.efficiency}   min={10}  step={0.5} suffix="%" onChange={u('efficiency')} />
+    <NumField label={t('tiltAngle')}              value={d.tiltAngle}    min={0}   step={5}   suffix="°" onChange={u('tiltAngle')} />
+    <NumField label={t('azimuth')}                value={d.azimuth}      min={0}   step={10}  suffix="°" onChange={u('azimuth')} />
   </>;
 
   if (d.deviceType === 'inverter') return <>
-    <NumField label="额定功率 (kW)" value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
-    <NumField label="转换效率" value={d.efficiency} min={80} step={0.5} suffix="%" onChange={u('efficiency')} />
-    <SelField label="逆变器类型" value={d.inverterType} opts={['组串式', '集中式', '微型']} onChange={u('inverterType')} />
+    <NumField label={`${t('ratedPower')} (kW)`}  value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
+    <NumField label={t('convEfficiency')}         value={d.efficiency}   min={80}  step={0.5} suffix="%" onChange={u('efficiency')} />
+    <SelField label={t('inverterTypeLabel')}      value={d.inverterType}
+      opts={[t('invTypeString'), t('invTypeCentral'), t('invTypeMicro')]} onChange={u('inverterType')} />
   </>;
 
   if (d.deviceType === 'battery') return <>
-    <NumField label="储能容量 (kWh)" value={d.capacityKwh} min={1} step={1} suffix="kWh" onChange={u('capacityKwh')} />
-    <NumField label="额定功率 (kW)" value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
-    <SelField label="电池化学体系" value={d.chemistry} opts={['LFP', 'NMC', 'NCA', '铅酸']} onChange={u('chemistry')} />
-    <NumField label="循环寿命" value={d.cycleLife} min={500} step={100} suffix="次" onChange={u('cycleLife')} />
+    <NumField label={`${t('battCapacity')} (kWh)`} value={d.capacityKwh}  min={1}   step={1}   suffix="kWh" onChange={u('capacityKwh')} />
+    <NumField label={`${t('ratedPower')} (kW)`}    value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW"  onChange={u('ratedPowerKw')} />
+    <SelField label={t('chemistry')}               value={d.chemistry}
+      opts={['LFP', 'NMC', 'NCA', t('chemLead')]} onChange={u('chemistry')} />
+    <NumField label={t('cycleLife')}               value={d.cycleLife}    min={500} step={100} suffix={t('cycleUnit')} onChange={u('cycleLife')} />
   </>;
 
   if (d.deviceType === 'charger') return <>
-    <NumField label="单桩功率 (kW)" value={d.ratedPowerKw} min={3.5} step={3.5} suffix="kW" onChange={u('ratedPowerKw')} />
-    <NumField label="充电桩数量" value={d.chargerCount} min={1} step={1} suffix="台" onChange={u('chargerCount')} />
-    <SelField label="接口类型" value={d.connectorType} opts={['AC慢充', 'DC快充', 'AC/DC双枪']} onChange={u('connectorType')} />
+    <NumField label={`${t('chargerPower')} (kW)`}  value={d.ratedPowerKw} min={3.5} step={3.5} suffix="kW" onChange={u('ratedPowerKw')} />
+    <NumField label={t('chargerCountLabel')}        value={d.chargerCount} min={1}   step={1}   suffix={t('chargerCountUnit')} onChange={u('chargerCount')} />
+    <SelField label={t('connectorType')}            value={d.connectorType}
+      opts={[t('connAC'), t('connDC'), t('connBoth')]} onChange={u('connectorType')} />
   </>;
 
   if (d.deviceType === 'load') return <>
-    <NumField label="额定功率 (kW)" value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
-    <SelField label="负载类型" value={d.loadType} opts={['居民', '商业', '工业', '数据中心']} onChange={u('loadType')} />
-    <NumField label="日用电时长" value={d.dailyHours} min={1} step={0.5} suffix="h" onChange={u('dailyHours')} />
+    <NumField label={`${t('ratedPower')} (kW)`}  value={d.ratedPowerKw} min={0.5} step={0.5} suffix="kW" onChange={u('ratedPowerKw')} />
+    <SelField label={t('loadTypeLabel')}          value={d.loadType}
+      opts={[t('loadResidential'), t('loadCommercial'), t('loadIndustrial'), t('loadDataCenter')]} onChange={u('loadType')} />
+    <NumField label={t('dailyHours')}             value={d.dailyHours}   min={1}   step={0.5} suffix="h" onChange={u('dailyHours')} />
   </>;
 
   if (d.deviceType === 'grid') return <>
-    <NumField label="电压等级 (kV)" value={d.voltageKv} min={0.4} step={0.4} suffix="kV" onChange={u('voltageKv')} />
-    <SelField label="接入方式" value={d.gridType} opts={['并网', '离网', '微网']} onChange={u('gridType')} />
+    <NumField label={`${t('voltageLevel')} (kV)`} value={d.voltageKv}  min={0.4} step={0.4} suffix="kV" onChange={u('voltageKv')} />
+    <SelField label={t('gridConnection')}          value={d.gridType}
+      opts={[t('gridParallel'), t('gridOffGrid'), t('gridMicro')]} onChange={u('gridType')} />
   </>;
 
   return null;
 }
 
 export function NodeEditDrawer() {
+  const { t } = useTranslation();
   const nodes         = useTopologyStore((s) => s.nodes);
   const selectedId    = useTopologyStore((s) => s.selectedNodeId);
   const setSelectedId = useTopologyStore((s) => s.setSelectedNodeId);
@@ -104,7 +115,7 @@ export function NodeEditDrawer() {
   function handleDelete() {
     if (!node) return;
     deleteNode(node.id);
-    message.success(`已删除 ${node.data.label}`);
+    message.success(`${t('deletedNodeMsg')}: ${node.data.label}`);
   }
 
   if (!node) return null;
@@ -125,19 +136,18 @@ export function NodeEditDrawer() {
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Icon size={22} />
-          <span style={{ fontWeight: 700, color: accent }}>{LABEL[type]}</span>
-          <Tag color={accent} style={{ marginLeft: 4, fontSize: 10 }}>编辑参数</Tag>
+          <span style={{ fontWeight: 700, color: accent }}>{t(LABEL_KEY[type])}</span>
+          <Tag color={accent} style={{ marginLeft: 4, fontSize: 10 }}>{t('editParams')}</Tag>
         </div>
       }
       extra={
         <Button danger size="small" icon={<DeleteOutlined />} onClick={handleDelete}>
-          删除
+          {t('deleteBtn')}
         </Button>
       }
       styles={{ body: { padding: '16px 16px 0' } }}
     >
-      {/* Label */}
-      <Field label="设备名称">
+      <Field label={t('deviceName')}>
         <Typography.Text
           editable={{
             icon: <EditOutlined style={{ color: accent }} />,
@@ -151,37 +161,22 @@ export function NodeEditDrawer() {
 
       <Divider style={{ margin: '8px 0 12px' }} />
 
-      <NodeFields node={node} update={(d) => updateNode(node.id, d)} />
+      <NodeFields node={node} update={(d) => updateNode(node.id, d)} t={t} />
 
       <Divider style={{ margin: '8px 0 12px' }} />
 
-      {/* Spec summary */}
       <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px' }}>
         <Typography.Text style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 6 }}>
-          参数摘要
+          {t('paramSummary')}
         </Typography.Text>
         <Space wrap size={4}>
-          {node.data.ratedPowerKw != null && (
-            <Tag color="blue">{node.data.ratedPowerKw} kW</Tag>
-          )}
-          {node.data.capacityKwh != null && (
-            <Tag color="green">{node.data.capacityKwh} kWh</Tag>
-          )}
-          {node.data.efficiency != null && (
-            <Tag color="orange">效率 {node.data.efficiency}%</Tag>
-          )}
-          {node.data.chemistry && (
-            <Tag color="purple">{node.data.chemistry}</Tag>
-          )}
-          {node.data.inverterType && (
-            <Tag>{node.data.inverterType}</Tag>
-          )}
-          {node.data.loadType && (
-            <Tag>{node.data.loadType}</Tag>
-          )}
-          {node.data.gridType && (
-            <Tag>{node.data.gridType}</Tag>
-          )}
+          {node.data.ratedPowerKw != null && <Tag color="blue">{node.data.ratedPowerKw} kW</Tag>}
+          {node.data.capacityKwh  != null && <Tag color="green">{node.data.capacityKwh} kWh</Tag>}
+          {node.data.efficiency   != null && <Tag color="orange">{t('efficiencyTag')} {node.data.efficiency}%</Tag>}
+          {node.data.chemistry    && <Tag color="purple">{node.data.chemistry}</Tag>}
+          {node.data.inverterType && <Tag>{node.data.inverterType}</Tag>}
+          {node.data.loadType     && <Tag>{node.data.loadType}</Tag>}
+          {node.data.gridType     && <Tag>{node.data.gridType}</Tag>}
         </Space>
       </div>
     </Drawer>

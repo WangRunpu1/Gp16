@@ -1,6 +1,7 @@
 import { Button, Divider, InputNumber, Popover, Select, Tooltip, Typography, message } from 'antd';
 import { DeleteOutlined, PlusOutlined, RobotOutlined } from '@ant-design/icons';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { DeviceType, TopologyNode } from '@gp16/shared';
 import { nanoid } from '@/utils/nanoid';
 import { useTopologyStore } from '@/state/topologyStore';
@@ -14,8 +15,11 @@ const BG: Record<DeviceType, string> = {
   pv_panel: '#fffbe6', inverter: '#e6f4ff', battery: '#f6ffed',
   charger: '#fff0f6',  load: '#f9f0ff',     grid: '#fff7e6',
 };
-const LABEL: Record<DeviceType, string> = {
-  pv_panel: '光伏板', inverter: '逆变器', battery: '储能', charger: '充电桩', load: '负载', grid: '电网',
+
+// i18n key for each device label
+const LABEL_KEY: Record<DeviceType, string> = {
+  pv_panel: 'pvPanel', inverter: 'inverter', battery: 'battery',
+  charger: 'charger',  load: 'load',         grid: 'grid',
 };
 
 type Params = {
@@ -27,26 +31,32 @@ type Params = {
   grid_kv: number; grid_type: string;
 };
 
-const DEFAULTS: Params = {
-  pv_panel_kw: 10, pv_panel_count: 20, pv_panel_eff: 20, pv_panel_tilt: 30, pv_panel_az: 180,
-  inverter_kw: 10, inverter_eff: 98, inverter_type: '组串式',
-  battery_kwh: 20, battery_kw: 10, battery_chem: 'LFP', battery_cycles: 6000,
-  charger_kw: 7, charger_count: 2, charger_conn: 'AC',
-  load_kw: 5, load_type: '商业', load_hours: 10,
-  grid_kv: 10, grid_type: '并网',
-};
+function useDefaults(_t: (k: string) => string): Params {
+  return {
+    pv_panel_kw: 10, pv_panel_count: 20, pv_panel_eff: 20, pv_panel_tilt: 30, pv_panel_az: 180,
+    inverter_kw: 10, inverter_eff: 98, inverter_type: 'String',
+    battery_kwh: 20, battery_kw: 10, battery_chem: 'LFP', battery_cycles: 6000,
+    charger_kw: 7, charger_count: 2, charger_conn: 'AC Slow',
+    load_kw: 5, load_type: 'Commercial', load_hours: 10,
+    grid_kv: 10, grid_type: 'Grid-tied',
+  };
+}
 
-function ParamForm({ type, params, set }: { type: DeviceType; params: Params; set: (k: keyof Params, v: any) => void }) {
-  const num = (k: keyof Params, label: string, min: number, step: number, suffix: string) => (
+function ParamForm({ type, params, set, t }: {
+  type: DeviceType; params: Params;
+  set: (k: keyof Params, v: any) => void;
+  t: (k: string) => string;
+}) {
+  const num = (k: keyof Params, labelKey: string, min: number, step: number, suffix: string) => (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{t(labelKey)}</div>
       <InputNumber size="small" min={min} step={step} value={params[k] as number}
         onChange={(v) => v != null && set(k, v)} addonAfter={suffix} style={{ width: '100%' }} />
     </div>
   );
-  const sel = (k: keyof Params, label: string, opts: string[]) => (
+  const sel = (k: keyof Params, labelKey: string, opts: string[]) => (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{t(labelKey)}</div>
       <Select size="small" value={params[k] as string} onChange={(v) => set(k, v)} style={{ width: '100%' }}>
         {opts.map((o) => <Select.Option key={o} value={o}>{o}</Select.Option>)}
       </Select>
@@ -54,75 +64,75 @@ function ParamForm({ type, params, set }: { type: DeviceType; params: Params; se
   );
 
   if (type === 'pv_panel') return <div style={{ width: 200 }}>
-    {num('pv_panel_kw', '额定功率', 0.5, 0.5, 'kW')}
-    {num('pv_panel_count', '组件数量', 1, 1, '块')}
-    {num('pv_panel_eff', '组件效率', 10, 0.5, '%')}
-    {num('pv_panel_tilt', '倾斜角', 0, 5, '°')}
-    {num('pv_panel_az', '方位角', 0, 10, '°')}
+    {num('pv_panel_kw',    'ratedPower',  0.5, 0.5, 'kW')}
+    {num('pv_panel_count', 'panelCount',  1,   1,   t('panelCountUnit'))}
+    {num('pv_panel_eff',   'efficiency',  10,  0.5, '%')}
+    {num('pv_panel_tilt',  'tiltAngle',   0,   5,   '°')}
+    {num('pv_panel_az',    'azimuth',     0,   10,  '°')}
   </div>;
 
   if (type === 'inverter') return <div style={{ width: 200 }}>
-    {num('inverter_kw', '额定功率', 0.5, 0.5, 'kW')}
-    {num('inverter_eff', '转换效率', 80, 0.5, '%')}
-    {sel('inverter_type', '逆变器类型', ['组串式', '集中式', '微型'])}
+    {num('inverter_kw',  'ratedPower',       0.5, 0.5, 'kW')}
+    {num('inverter_eff', 'convEfficiency',   80,  0.5, '%')}
+    {sel('inverter_type','inverterTypeLabel', [t('invTypeString'), t('invTypeCentral'), t('invTypeMicro')])}
   </div>;
 
   if (type === 'battery') return <div style={{ width: 200 }}>
-    {num('battery_kwh', '储能容量', 1, 1, 'kWh')}
-    {num('battery_kw', '额定功率', 0.5, 0.5, 'kW')}
-    {sel('battery_chem', '电池化学体系', ['LFP', 'NMC', 'NCA', '铅酸'])}
-    {num('battery_cycles', '循环寿命', 500, 100, '次')}
+    {num('battery_kwh',    'battCapacity', 1,   1,   'kWh')}
+    {num('battery_kw',     'ratedPower',   0.5, 0.5, 'kW')}
+    {sel('battery_chem',   'chemistry',    ['LFP', 'NMC', 'NCA', t('chemLead')])}
+    {num('battery_cycles', 'cycleLife',    500, 100, t('cycleUnit'))}
   </div>;
 
   if (type === 'charger') return <div style={{ width: 200 }}>
-    {num('charger_kw', '单桩功率', 3.5, 3.5, 'kW')}
-    {num('charger_count', '充电桩数量', 1, 1, '台')}
-    {sel('charger_conn', '接口类型', ['AC慢充', 'DC快充', 'AC/DC双枪'])}
+    {num('charger_kw',    'chargerPower',      3.5, 3.5, 'kW')}
+    {num('charger_count', 'chargerCountLabel', 1,   1,   t('chargerCountUnit'))}
+    {sel('charger_conn',  'connectorType',     [t('connAC'), t('connDC'), t('connBoth')])}
   </div>;
 
   if (type === 'load') return <div style={{ width: 200 }}>
-    {num('load_kw', '额定功率', 0.5, 0.5, 'kW')}
-    {sel('load_type', '负载类型', ['居民', '商业', '工业', '数据中心'])}
-    {num('load_hours', '日用电时长', 1, 0.5, 'h')}
+    {num('load_kw',    'ratedPower',   0.5, 0.5, 'kW')}
+    {sel('load_type',  'loadTypeLabel',[t('loadResidential'), t('loadCommercial'), t('loadIndustrial'), t('loadDataCenter')])}
+    {num('load_hours', 'dailyHours',   1,   0.5, 'h')}
   </div>;
 
   if (type === 'grid') return <div style={{ width: 200 }}>
-    {num('grid_kv', '电压等级', 0.4, 0.4, 'kV')}
-    {sel('grid_type', '接入方式', ['并网', '离网', '微网'])}
+    {num('grid_kv',   'voltageLevel',   0.4, 0.4, 'kV')}
+    {sel('grid_type', 'gridConnection', [t('gridParallel'), t('gridOffGrid'), t('gridMicro')])}
   </div>;
 
   return null;
 }
 
-function buildNodeData(type: DeviceType, params: Params): TopologyNode['data'] {
+function buildNodeData(type: DeviceType, params: Params, t: (k: string) => string): TopologyNode['data'] {
   if (type === 'pv_panel') return {
-    label: `光伏板 ${params.pv_panel_kw}kW×${params.pv_panel_count}`,
+    label: `${t('nodeLabelPv')} ${params.pv_panel_kw}kW×${params.pv_panel_count}`,
     deviceType: type, ratedPowerKw: params.pv_panel_kw,
     panelCount: params.pv_panel_count, efficiency: params.pv_panel_eff,
     tiltAngle: params.pv_panel_tilt, azimuth: params.pv_panel_az,
   };
   if (type === 'inverter') return {
-    label: `逆变器 ${params.inverter_kw}kW`,
+    label: `${t('nodeLabelInv')} ${params.inverter_kw}kW`,
     deviceType: type, ratedPowerKw: params.inverter_kw,
     efficiency: params.inverter_eff, inverterType: params.inverter_type,
   };
   if (type === 'battery') return {
-    label: `储能 ${params.battery_kwh}kWh`,
+    label: `${t('nodeLabelBat')} ${params.battery_kwh}kWh`,
     deviceType: type, capacityKwh: params.battery_kwh, ratedPowerKw: params.battery_kw,
     chemistry: params.battery_chem, cycleLife: params.battery_cycles,
   };
   if (type === 'charger') return {
-    label: `充电桩 ${params.charger_kw}kW×${params.charger_count}`,
+    label: `${t('nodeLabelChg')} ${params.charger_kw}kW×${params.charger_count}`,
     deviceType: type, ratedPowerKw: params.charger_kw * params.charger_count,
     chargerCount: params.charger_count, connectorType: params.charger_conn,
   };
   if (type === 'load') return {
-    label: `${params.load_type}负载 ${params.load_kw}kW`,
+    label: `${params.load_type} ${t('nodeLabelLoad')} ${params.load_kw}kW`,
     deviceType: type, ratedPowerKw: params.load_kw,
     loadType: params.load_type, dailyHours: params.load_hours,
   };
   return {
-    label: `电网 ${params.grid_kv}kV`,
+    label: `${t('nodeLabelGrid')} ${params.grid_kv}kV`,
     deviceType: type, voltageKv: params.grid_kv, gridType: params.grid_type,
   };
 }
@@ -130,11 +140,12 @@ function buildNodeData(type: DeviceType, params: Params): TopologyNode['data'] {
 const DEVICES: DeviceType[] = ['pv_panel', 'inverter', 'battery', 'charger', 'load', 'grid'];
 
 export function BottomToolbar() {
-  const nodes = useTopologyStore((s) => s.nodes);
-  const setNodes = useTopologyStore((s) => s.setNodes);
+  const { t } = useTranslation();
+  const nodes          = useTopologyStore((s) => s.nodes);
+  const setNodes       = useTopologyStore((s) => s.setNodes);
   const selectedNodeId = useTopologyStore((s) => s.selectedNodeId);
-  const deleteNode = useTopologyStore((s) => s.deleteNode);
-  const [params, setParams] = useState<Params>(DEFAULTS);
+  const deleteNode     = useTopologyStore((s) => s.deleteNode);
+  const [params, setParams] = useState<Params>(() => useDefaults(t));
   const [open, setOpen] = useState<DeviceType | null>(null);
 
   function setParam(k: keyof Params, v: any) {
@@ -142,9 +153,9 @@ export function BottomToolbar() {
   }
 
   function addNode(type: DeviceType) {
-    const data = buildNodeData(type, params);
-    const col = nodes.length % 5;
-    const row = Math.floor(nodes.length / 5);
+    const data = buildNodeData(type, params, t);
+    const col  = nodes.length % 5;
+    const row  = Math.floor(nodes.length / 5);
     const node: TopologyNode = {
       id: nanoid(),
       position: { x: 80 + col * 200, y: 80 + row * 130 },
@@ -152,13 +163,13 @@ export function BottomToolbar() {
     };
     setNodes([...nodes, node]);
     setOpen(null);
-    message.success(`已添加 ${data.label}`);
+    message.success(`${t('addedMsg')}: ${data.label}`);
   }
 
   function handleDelete() {
-    if (!selectedNodeId) return message.warning('请先在画布上点击选中一个设备');
+    if (!selectedNodeId) return message.warning(t('deleteNoSelectMsg'));
     deleteNode(selectedNodeId);
-    message.success('已删除');
+    message.success(t('deletedMsg'));
   }
 
   return (
@@ -174,17 +185,18 @@ export function BottomToolbar() {
         borderRight: '1px solid #e5e7eb', minWidth: 90,
       }}>
         <RobotOutlined style={{ fontSize: 22, color: '#1677ff' }} />
-        <Typography.Text style={{ fontSize: 10, color: '#1677ff', textAlign: 'center', lineHeight: 1.3 }}>
-          AI 对话<br/>生成布局
+        <Typography.Text style={{ fontSize: 10, color: '#1677ff', textAlign: 'center', lineHeight: 1.3, whiteSpace: 'pre-line' }}>
+          {t('aiDialogHint')}
         </Typography.Text>
       </div>
 
       {/* Center: device cards */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', overflowX: 'auto' }}>
         {DEVICES.map((type) => {
-          const Icon = DEVICE_ICON[type];
+          const Icon   = DEVICE_ICON[type];
           const accent = ACCENT[type];
-          const bg = BG[type];
+          const bg     = BG[type];
+          const label  = t(LABEL_KEY[type]);
           return (
             <Popover
               key={type}
@@ -195,16 +207,16 @@ export function BottomToolbar() {
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Icon size={20} />
-                  <span style={{ color: accent, fontWeight: 600 }}>{LABEL[type]} 参数设置</span>
+                  <span style={{ color: accent, fontWeight: 600 }}>{label} {t('paramSettings')}</span>
                 </div>
               }
               content={
                 <div>
-                  <ParamForm type={type} params={params} set={setParam} />
+                  <ParamForm type={type} params={params} set={setParam} t={t} />
                   <Button type="primary" block size="small" icon={<PlusOutlined />}
                     style={{ background: accent, borderColor: accent, marginTop: 4 }}
                     onClick={() => addNode(type)}>
-                    添加到画布
+                    {t('addToCanvas')}
                   </Button>
                 </div>
               }
@@ -223,14 +235,11 @@ export function BottomToolbar() {
               >
                 <Icon size={32} />
                 <Typography.Text style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginTop: 2 }}>
-                  {LABEL[type]}
+                  {label}
                 </Typography.Text>
-                <Tooltip title="点击设置参数并添加">
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 3,
-                    fontSize: 10, color: accent, fontWeight: 500,
-                  }}>
-                    <PlusOutlined style={{ fontSize: 9 }} /> 添加
+                <Tooltip title={t('clickToAdd')}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: accent, fontWeight: 500 }}>
+                    <PlusOutlined style={{ fontSize: 9 }} /> {t('addDevice')}
                   </div>
                 </Tooltip>
               </div>
@@ -243,14 +252,14 @@ export function BottomToolbar() {
 
       {/* Right: delete */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
-        <Tooltip title={selectedNodeId ? '删除选中设备' : '请先在画布上选中设备'}>
+        <Tooltip title={selectedNodeId ? t('deleteSelectedTip') : t('selectFirstTip')}>
           <Button
             danger icon={<DeleteOutlined />} size="small"
             disabled={!selectedNodeId}
             onClick={handleDelete}
             style={{ fontSize: 12 }}
           >
-            删除选中
+            {t('deleteSelected')}
           </Button>
         </Tooltip>
       </div>
