@@ -1,3 +1,4 @@
+import { ReactFlowProvider } from 'reactflow';
 import { AIChatPanel } from './canvas/AIChatPanel';
 import { BottomToolbar } from './canvas/BottomToolbar';
 import { TopologyCanvas } from './canvas/TopologyCanvas';
@@ -24,13 +25,15 @@ export function CanvasPage() {
       {/* Center: Canvas + Bottom Toolbar */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Canvas area — position:relative so the Drawer anchors here */}
-        <div style={{ flex: 1, position: 'relative', background: '#f8fafc', overflow: 'hidden' }}>
-          <TopologyCanvas />
-          <NodeEditDrawer />
-        </div>
+        <ReactFlowProvider>
+          <div style={{ flex: 1, position: 'relative', background: '#f8fafc', overflow: 'hidden' }}>
+            <TopologyCanvas />
+            <NodeEditDrawer />
+          </div>
 
-        {/* Bottom toolbar */}
-        <BottomToolbar />
+          {/* Bottom toolbar */}
+          <BottomToolbar />
+        </ReactFlowProvider>
       </div>
 
       {/* Right: Analytics Panel */}
