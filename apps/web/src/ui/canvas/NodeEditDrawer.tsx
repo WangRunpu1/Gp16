@@ -5,15 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
 import { DEVICE_ICON } from './DeviceIcons';
 import type { DeviceType, TopologyNode } from '@gp16/shared';
-
-const ACCENT: Record<DeviceType, string> = {
-  pv_panel: '#faad14', inverter: '#1677ff', battery: '#52c41a',
-  charger: '#eb2f96',  load: '#722ed1',     grid: '#fa8c16',
-};
-const LABEL_KEY: Record<DeviceType, string> = {
-  pv_panel: 'pvPanel', inverter: 'inverter', battery: 'battery',
-  charger: 'charger',  load: 'load',         grid: 'grid',
-};
+import { ACCENT, LABEL_KEY } from '@/theme';
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

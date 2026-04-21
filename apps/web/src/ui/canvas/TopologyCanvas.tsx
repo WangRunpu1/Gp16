@@ -1,31 +1,17 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background, Controls, MiniMap,
   Handle, Position,
-  addEdge,
   type Connection, type Edge, type Node, type NodeChange, type EdgeChange,
-  applyNodeChanges, applyEdgeChanges,
   useNodesState, useEdgesState,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
 import type { DeviceType } from '@gp16/shared';
 import { DEVICE_ICON } from './DeviceIcons';
-import { useEffect } from 'react';
-
-const ACCENT: Record<DeviceType, string> = {
-  pv_panel: '#faad14', inverter: '#1677ff', battery: '#52c41a',
-  charger: '#eb2f96',  load: '#722ed1',     grid: '#fa8c16',
-};
-const BG: Record<DeviceType, string> = {
-  pv_panel: '#fffbe6', inverter: '#e6f4ff', battery: '#f6ffed',
-  charger: '#fff0f6',  load: '#f9f0ff',     grid: '#fff7e6',
-};
-const LABEL: Record<DeviceType, string> = {
-  pv_panel: '光伏板', inverter: '逆变器', battery: '储能',
-  charger: '充电桩',  load: '负载',       grid: '电网',
-};
+import { ACCENT, BG, NODE_LABEL_KEY, CONN_LABEL_KEY } from '@/theme';
 
 const ALLOWED: Record<DeviceType, DeviceType[]> = {
   pv_panel: ['inverter'],
@@ -36,27 +22,16 @@ const ALLOWED: Record<DeviceType, DeviceType[]> = {
   grid:     ['inverter', 'load'],
 };
 
-const CONN_LABEL: Record<string, string> = {
-  'pv_panel->inverter': '直流输出',
-  'inverter->battery':  '充放电',
-  'inverter->load':     '交流供电',
-  'inverter->grid':     '并网输出',
-  'inverter->charger':  '交流充电',
-  'battery->inverter':  '放电',
-  'battery->charger':   '直流充电',
-  'grid->inverter':     '并网',
-  'grid->load':         '市电供电',
-  'charger->load':      '充电输出',
-};
-
 interface NodeData {
   label: string;
   deviceType: DeviceType;
   ratedPowerKw?: number;
   capacityKwh?: number;
+  _t?: (k: string) => string;
 }
 
 function DeviceNode({ data, selected }: { data: NodeData; selected?: boolean }) {
+  const { t } = useTranslation();
   const type   = data.deviceType;
   const accent = ACCENT[type] ?? '#999';
   const bg     = BG[type]     ?? '#f5f5f5';
@@ -86,7 +61,7 @@ function DeviceNode({ data, selected }: { data: NodeData; selected?: boolean }) 
             {spec}
           </div>
         )}
-        <div style={{ fontSize: 10, color: accent, fontWeight: 500 }}>{LABEL[type]}</div>
+        <div style={{ fontSize: 10, color: accent, fontWeight: 500 }}>{t(NODE_LABEL_KEY[type])}</div>
       </div>
 
       <Handle type="source" position={Position.Right}
@@ -112,11 +87,12 @@ function toRFNodes(storeNodes: any[], selectedId: string | null): Node[] {
   }));
 }
 
-function toRFEdges(storeEdges: any[], storeNodes: any[]): Edge[] {
+function toRFEdges(storeEdges: any[], storeNodes: any[], t: (k: string) => string): Edge[] {
   return storeEdges.map((e) => {
     const src = storeNodes.find((n) => n.id === e.source)?.data.deviceType;
     const tgt = storeNodes.find((n) => n.id === e.target)?.data.deviceType;
-    const lbl = src && tgt ? CONN_LABEL[`${src}->${tgt}`] : undefined;
+    const labelKey = src && tgt ? CONN_LABEL_KEY[`${src}->${tgt}`] : undefined;
+    const lbl = labelKey ? t(labelKey) : undefined;
     return {
       id: e.id, source: e.source, target: e.target,
       label: lbl,
@@ -130,6 +106,7 @@ function toRFEdges(storeEdges: any[], storeNodes: any[]): Edge[] {
 }
 
 export function TopologyCanvas() {
+  const { t, i18n } = useTranslation();
   const storeNodes     = useTopologyStore((s) => s.nodes);
   const storeEdges     = useTopologyStore((s) => s.edges);
   const selectedId     = useTopologyStore((s) => s.selectedNodeId);
@@ -138,21 +115,18 @@ export function TopologyCanvas() {
   const setSelectedId  = useTopologyStore((s) => s.setSelectedNodeId);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(toRFNodes(storeNodes, selectedId));
-  const [edges, setEdges, onEdgesChange] = useEdgesState(toRFEdges(storeEdges, storeNodes));
+  const [edges, setEdges, onEdgesChange] = useEdgesState(toRFEdges(storeEdges, storeNodes, t));
 
-  // 当 store 变化时同步到 ReactFlow 内部状态
   useEffect(() => {
     setNodes(toRFNodes(storeNodes, selectedId));
   }, [storeNodes, selectedId]);
 
   useEffect(() => {
-    setEdges(toRFEdges(storeEdges, storeNodes));
-  }, [storeEdges, storeNodes]);
+    setEdges(toRFEdges(storeEdges, storeNodes, t));
+  }, [storeEdges, storeNodes, i18n.language]);
 
-  // 节点拖动后同步位置回 store
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChange(changes);
-    // 只处理位置变化，避免覆盖 store 数据
     const posChanges = changes.filter((c) => c.type === 'position' && c.position);
     if (posChanges.length > 0) {
       const cur = useTopologyStore.getState().nodes;
@@ -162,7 +136,6 @@ export function TopologyCanvas() {
       });
       setStoreNodes(updated);
     }
-    // 处理删除
     const removeChanges = changes.filter((c) => c.type === 'remove');
     removeChanges.forEach((c: any) => {
       useTopologyStore.getState().deleteNode(c.id);
@@ -187,21 +160,25 @@ export function TopologyCanvas() {
     const tgtType  = curNodes.find((n) => n.id === conn.target)?.data.deviceType as DeviceType;
     if (!srcType || !tgtType) return;
 
+    const srcLabel = t(NODE_LABEL_KEY[srcType]);
+    const tgtLabel = t(NODE_LABEL_KEY[tgtType]);
+
     if (!(ALLOWED[srcType] ?? []).includes(tgtType)) {
-      message.error(`不允许的连接：${LABEL[srcType]} → ${LABEL[tgtType]}`);
+      message.error(t('connNotAllowed', { src: srcLabel, tgt: tgtLabel }));
       return;
     }
 
     const curEdges = useTopologyStore.getState().edges;
     if (curEdges.some((e) => e.source === conn.source && e.target === conn.target)) {
-      message.warning('该连接已存在');
+      message.warning(t('connDuplicate'));
       return;
     }
 
     const newEdge = { id: `e-${conn.source}-${conn.target}`, source: conn.source, target: conn.target };
     setStoreEdges([...curEdges, newEdge]);
-    message.success(`已连接：${LABEL[srcType]} → ${LABEL[tgtType]}（${CONN_LABEL[`${srcType}->${tgtType}`] ?? ''}）`);
-  }, [setStoreEdges]);
+    const connKey = CONN_LABEL_KEY[`${srcType}->${tgtType}`];
+    message.success(t('connSuccess', { src: srcLabel, tgt: tgtLabel, label: connKey ? t(connKey) : '' }));
+  }, [setStoreEdges, t]);
 
   const onNodeClick = useCallback((_: any, node: Node) => setSelectedId(node.id), [setSelectedId]);
   const onPaneClick = useCallback(() => setSelectedId(null), [setSelectedId]);

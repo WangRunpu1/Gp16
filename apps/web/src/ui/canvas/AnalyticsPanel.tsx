@@ -1,4 +1,8 @@
-import { Alert, Card, Collapse, Divider, InputNumber, Spin, Statistic, Tag, Typography } from 'antd';
+import { Alert, Card, Collapse, InputNumber, Spin, Statistic, Tag, Typography } from 'antd';
+import {
+  ThunderboltOutlined, CloudOutlined, DollarOutlined,
+  FieldTimeOutlined, RiseOutlined,
+} from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -34,7 +38,8 @@ export function AnalyticsPanel() {
 
   return (
     <div style={{ padding: '12px 10px', overflowY: 'auto', height: '100%' }}>
-      <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 12 }}>
+      <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <RiseOutlined style={{ color: '#52c41a' }} />
         {t('analysis')}
       </Typography.Title>
 
@@ -46,16 +51,37 @@ export function AnalyticsPanel() {
         ) : (
           <Spin spinning={loading}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              <Statistic title={`${t('pvInstalled')} (kW)`}   value={Number((data?.summary.pvInstalledKw ?? 0).toFixed(1))} />
-              <Statistic title={`${t('annualGen')} (kWh)`}    value={data ? Math.round(data.summary.annualGenerationKwh).toLocaleString() : '-'} />
-              <Statistic title={`${t('co2Saved')} (tCO₂)`}   value={data ? Number(data.summary.annualCo2SavedTons.toFixed(2)) : '-'} />
-              <Statistic title={`${t('trees')}`}         value={data ? Math.round(data.summary.equivalentTrees).toLocaleString() : '-'} />
-              <Statistic title={`${t('totalCapex')} (¥)`}     value={data ? `¥${Math.round(data.summary.totalCapex).toLocaleString()}` : '-'} />
+              <Statistic
+                title={`${t('pvInstalled')} (kW)`}
+                value={Number((data?.summary.pvInstalledKw ?? 0).toFixed(1))}
+                prefix={<ThunderboltOutlined style={{ color: '#faad14', fontSize: 14 }} />}
+              />
+              <Statistic
+                title={`${t('annualGen')} (kWh)`}
+                value={data ? Math.round(data.summary.annualGenerationKwh).toLocaleString() : '-'}
+                prefix={<span style={{ fontSize: 14 }}>⚡</span>}
+              />
+              <Statistic
+                title={`${t('co2Saved')} (tCO₂)`}
+                value={data ? Number(data.summary.annualCo2SavedTons.toFixed(2)) : '-'}
+                prefix={<CloudOutlined style={{ color: '#52c41a', fontSize: 14 }} />}
+              />
+              <Statistic
+                title={t('trees')}
+                value={data ? Math.round(data.summary.equivalentTrees).toLocaleString() : '-'}
+                prefix={<span style={{ fontSize: 14 }}>🌳</span>}
+              />
+              <Statistic
+                title={`${t('totalCapex')} (¥)`}
+                value={data ? `¥${Math.round(data.summary.totalCapex).toLocaleString()}` : '-'}
+                prefix={<DollarOutlined style={{ color: '#fa8c16', fontSize: 14 }} />}
+              />
             </div>
             <div style={{ marginTop: 10 }}>
               {payback != null && (
-                <span>
-                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>{t('payback')}：</Typography.Text>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <FieldTimeOutlined style={{ color: '#8c8c8c', fontSize: 13 }} />
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>{t('payback')}:</Typography.Text>
                   <Tag color={payback <= 8 ? 'success' : payback <= 15 ? 'warning' : 'error'}>
                     {payback.toFixed(1)} {t('years')}
                   </Tag>

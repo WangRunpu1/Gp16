@@ -6,21 +6,7 @@ import type { DeviceType, TopologyNode } from '@gp16/shared';
 import { nanoid } from '@/utils/nanoid';
 import { useTopologyStore } from '@/state/topologyStore';
 import { DEVICE_ICON } from './DeviceIcons';
-
-const ACCENT: Record<DeviceType, string> = {
-  pv_panel: '#faad14', inverter: '#1677ff', battery: '#52c41a',
-  charger: '#eb2f96',  load: '#722ed1',     grid: '#fa8c16',
-};
-const BG: Record<DeviceType, string> = {
-  pv_panel: '#fffbe6', inverter: '#e6f4ff', battery: '#f6ffed',
-  charger: '#fff0f6',  load: '#f9f0ff',     grid: '#fff7e6',
-};
-
-// i18n key for each device label
-const LABEL_KEY: Record<DeviceType, string> = {
-  pv_panel: 'pvPanel', inverter: 'inverter', battery: 'battery',
-  charger: 'charger',  load: 'load',         grid: 'grid',
-};
+import { ACCENT, BG, LABEL_KEY } from '@/theme';
 
 type Params = {
   pv_panel_kw: number; pv_panel_count: number; pv_panel_eff: number; pv_panel_tilt: number; pv_panel_az: number;

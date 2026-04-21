@@ -1,4 +1,5 @@
 import { Button, Drawer, Input, List, message, Modal, Popconfirm, Space, Typography } from 'antd';
+import { SaveOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
@@ -6,7 +7,7 @@ import { apiFetch, postJson } from '@/api/client';
 import type { SavedTopology } from '@gp16/shared';
 
 export function TopologyManager() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const nodes = useTopologyStore((s) => s.nodes);
   const edges = useTopologyStore((s) => s.edges);
   const setNodes = useTopologyStore((s) => s.setNodes);
@@ -56,12 +57,12 @@ export function TopologyManager() {
 
   return (
     <>
-      <Space>
-        <Button size="small" onClick={() => setSaveOpen(true)} disabled={nodes.length === 0}>
-          💾 {t('saveTopology')}
+      <Space style={{ width: '100%' }}>
+        <Button size="small" icon={<SaveOutlined />} onClick={() => setSaveOpen(true)} disabled={nodes.length === 0}>
+          {t('saveTopology')}
         </Button>
-        <Button size="small" onClick={() => setOpen(true)}>
-          📂 {t('loadTopology')}
+        <Button size="small" icon={<FolderOpenOutlined />} onClick={() => setOpen(true)}>
+          {t('loadTopology')}
         </Button>
       </Space>
 
@@ -89,15 +90,15 @@ export function TopologyManager() {
             renderItem={(item) => (
               <List.Item
                 actions={[
-                  <Button size="small" type="link" onClick={() => load(item)}>加载</Button>,
-                  <Popconfirm title="确认删除？" onConfirm={() => del(item.id)}>
-                    <Button size="small" type="link" danger>删除</Button>
+                  <Button size="small" type="link" onClick={() => load(item)}>{t('loadBtn')}</Button>,
+                  <Popconfirm title={t('confirmDelete')} onConfirm={() => del(item.id)}>
+                    <Button size="small" type="link" danger>{t('deleteBtn')}</Button>
                   </Popconfirm>,
                 ]}
               >
                 <List.Item.Meta
                   title={item.name}
-                  description={`${item.nodes.length} 设备 · ${new Date(item.updatedAt).toLocaleDateString('zh-CN')}`}
+                  description={`${t('deviceCount', { count: item.nodes.length })} · ${new Date(item.updatedAt).toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US')}`}
                 />
               </List.Item>
             )}

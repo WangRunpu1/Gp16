@@ -1,4 +1,5 @@
 import { Button, message } from 'antd';
+import { FilePdfOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
@@ -32,7 +33,7 @@ export function ReportButton() {
       }
       throw new Error('timeout');
     } catch (e: any) {
-      message.error(`${t('reportFail')}：${e?.message ?? e}`);
+      message.error(`${t('reportFail')}: ${e?.message ?? e}`);
     } finally {
       setLoading(false);
     }
@@ -40,11 +41,13 @@ export function ReportButton() {
 
   return (
     <Button
-      type="default"
+      type="primary"
       loading={loading}
       onClick={generate}
       disabled={nodes.length === 0}
-      icon={<span>📄</span>}
+      icon={<FilePdfOutlined />}
+      block
+      style={{ fontWeight: 600 }}
     >
       {loading ? t('reportGenerating') : t('generateReport')}
     </Button>

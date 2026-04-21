@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { getToken, apiFetch } from './api/client';
 import { LoginPage } from './ui/LoginPage';
 import { AppShell } from './ui/AppShell';
+import { appTheme } from './theme';
 import './i18n';
 
 export default function App() {
@@ -28,7 +29,10 @@ export default function App() {
   return (
     <ConfigProvider
       locale={i18n.language === 'zh' ? zhCN : enUS}
-      theme={{ algorithm: theme.defaultAlgorithm, token: { colorPrimary: '#1677ff' } }}
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        ...appTheme,
+      }}
     >
       {authed
         ? <AppShell onLogout={() => { setAuthed(false); setEmail(''); }} userEmail={email} />

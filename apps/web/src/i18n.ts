@@ -123,6 +123,26 @@ const zh = {
     paramSummary: '参数摘要',
     efficiencyTag: '效率',
     deletedNodeMsg: '已删除',
+    // Connection labels
+    connLabelPvToInv: '直流输出',
+    connLabelInvToBat: '充放电',
+    connLabelInvToLoad: '交流供电',
+    connLabelInvToGrid: '并网输出',
+    connLabelInvToChg: '交流充电',
+    connLabelBatToInv: '放电',
+    connLabelBatToChg: '直流充电',
+    connLabelGridToInv: '并网',
+    connLabelGridToLoad: '市电供电',
+    connLabelChgToLoad: '充电输出',
+    // Connection messages
+    connNotAllowed: '不允许的连接：{{src}} → {{tgt}}',
+    connDuplicate: '该连接已存在',
+    connSuccess: '已连接：{{src}} → {{tgt}}（{{label}}）',
+    // TopologyManager extras
+    loadBtn: '加载',
+    confirmDelete: '确认删除？',
+    deviceCount: '{{count}} 台设备',
+    demoCredentials: '测试账号',
     // AIChatPanel
     aiAssistant: 'AI 布局助手',
     aiSubtitle: 'GP16 智能设计',
@@ -270,6 +290,26 @@ const en = {
     paramSummary: 'Summary',
     efficiencyTag: 'Eff.',
     deletedNodeMsg: 'Deleted',
+    // Connection labels
+    connLabelPvToInv: 'DC Output',
+    connLabelInvToBat: 'Charge/Discharge',
+    connLabelInvToLoad: 'AC Supply',
+    connLabelInvToGrid: 'Grid Feed-in',
+    connLabelInvToChg: 'AC Charging',
+    connLabelBatToInv: 'Discharge',
+    connLabelBatToChg: 'DC Charging',
+    connLabelGridToInv: 'Grid Input',
+    connLabelGridToLoad: 'Mains Supply',
+    connLabelChgToLoad: 'Charger Output',
+    // Connection messages
+    connNotAllowed: 'Connection not allowed: {{src}} → {{tgt}}',
+    connDuplicate: 'Connection already exists',
+    connSuccess: 'Connected: {{src}} → {{tgt}} ({{label}})',
+    // TopologyManager extras
+    loadBtn: 'Load',
+    confirmDelete: 'Confirm delete?',
+    deviceCount: '{{count}} devices',
+    demoCredentials: 'Demo Accounts',
     // AIChatPanel
     aiAssistant: 'AI Layout Agent',
     aiSubtitle: 'GP16 Smart Design',
