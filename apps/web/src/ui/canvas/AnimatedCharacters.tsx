@@ -26,7 +26,7 @@ const blackStyle: React.CSSProperties = {
 };
 // Orange: solar panel array (wide flat body with tilted panels and mounting stand)
 const orangeStyle: React.CSSProperties = {
-  position: 'absolute', bottom: 0, left: 0, width: '240px', height: '200px',
+  position: 'absolute', bottom: 0, left: 0, width: '240px', height: '260px',
   backgroundColor: 'transparent', zIndex: 3,
   transformOrigin: 'bottom center', willChange: 'transform',
 };
@@ -38,7 +38,7 @@ const yellowStyle: React.CSSProperties = {
 };
 const purpleFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '45px', top: '40px' };
 const blackFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '26px', top: '32px' };
-const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '10px' };
+const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '-18px' };
 const yellowFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '52px', top: '40px' };
 const yellowMouthStyle: React.CSSProperties = {
   position: 'absolute', width: '80px', height: '4px', backgroundColor: '#2D2D2D',
@@ -475,7 +475,7 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
         }} />
         {/* Tilted solar panel */}
         <div style={{
-          position: 'absolute', bottom: 55, left: 10, right: 10, height: 110,
+          position: 'absolute', bottom: 55, left: 10, right: 10, height: 150,
           backgroundColor: '#FF9B6B', borderRadius: 8,
           border: '2px solid #e88a5a',
           transform: 'perspective(300px) rotateX(8deg)',
@@ -483,8 +483,8 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
           overflow: 'hidden',
         }}>
           {/* Panel grid lines */}
-          <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 2, padding: 4 }}>
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr', gap: 2, padding: 4 }}>
+            {Array.from({ length: 9 }).map((_, i) => (
               <div key={i} style={{
                 background: 'linear-gradient(135deg, rgba(30,64,175,0.35) 0%, rgba(59,130,246,0.25) 100%)',
                 borderRadius: 1, border: '1px solid rgba(59,130,246,0.15)',
