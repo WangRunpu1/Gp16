@@ -1,0 +1,19 @@
+.eyeBase {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  will-change: height;
+}
+
+.eyeBall {
+  composes: eyeBase;
+  background-color: white;
+}
+
+.eyeBallPupil {
+  border-radius: 50%;
+  background-color: #2d2d2d;
+  will-change: transform;
+}
