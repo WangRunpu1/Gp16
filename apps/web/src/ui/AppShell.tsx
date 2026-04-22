@@ -1,4 +1,4 @@
-import { Avatar, Button, Dropdown, Layout, Space, Typography } from 'antd';
+import { Avatar, Button, Dropdown, Layout, Popconfirm, Space, Typography } from 'antd';
 import { GlobalOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { clearToken } from '@/api/client';
@@ -68,17 +68,25 @@ export function AppShell({ onLogout, userEmail }: Props) {
           >
             {t('lang')}
           </Button>
-          <Button size="small" ghost icon={<LogoutOutlined />} onClick={logout}
-            style={{
-              borderColor: 'rgba(239,68,68,0.35)', color: 'rgba(252,165,165,0.85)',
-              fontSize: 12, fontWeight: 500, borderRadius: 8, height: 32,
-              display: 'flex', alignItems: 'center',
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.6)'; (e.currentTarget as HTMLElement).style.color = '#fca5a5'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.35)'; (e.currentTarget as HTMLElement).style.color = 'rgba(252,165,165,0.85)'; }}
+          <Popconfirm
+            title={t('confirmLogout')}
+            onConfirm={logout}
+            okText={t('confirm')}
+            cancelText={t('cancel')}
+            okButtonProps={{ danger: true }}
           >
-            {t('logout')}
-          </Button>
+            <Button size="small" ghost icon={<LogoutOutlined />}
+              style={{
+                borderColor: 'rgba(239,68,68,0.35)', color: 'rgba(252,165,165,0.85)',
+                fontSize: 12, fontWeight: 500, borderRadius: 8, height: 32,
+                display: 'flex', alignItems: 'center',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.6)'; (e.currentTarget as HTMLElement).style.color = '#fca5a5'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(239,68,68,0.35)'; (e.currentTarget as HTMLElement).style.color = 'rgba(252,165,165,0.85)'; }}
+            >
+              {t('logout')}
+            </Button>
+          </Popconfirm>
         </Space>
       </Header>
       <Content style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
