@@ -58,10 +58,12 @@ export function TopologyManager() {
   return (
     <>
       <Space style={{ width: '100%' }}>
-        <Button size="small" icon={<SaveOutlined />} onClick={() => setSaveOpen(true)} disabled={nodes.length === 0}>
+        <Button size="small" icon={<SaveOutlined />} onClick={() => setSaveOpen(true)} disabled={nodes.length === 0}
+          style={{ borderRadius: 8, fontWeight: 500, flex: 1 }}>
           {t('saveTopology')}
         </Button>
-        <Button size="small" icon={<FolderOpenOutlined />} onClick={() => setOpen(true)}>
+        <Button size="small" icon={<FolderOpenOutlined />} onClick={() => setOpen(true)}
+          style={{ borderRadius: 8, fontWeight: 500, flex: 1 }}>
           {t('loadTopology')}
         </Button>
       </Space>
@@ -71,34 +73,40 @@ export function TopologyManager() {
         title={t('saveTopology')} open={saveOpen}
         onOk={save} onCancel={() => setSaveOpen(false)}
         confirmLoading={saving} okText={t('saveTopology')}
+        centered
       >
         <Input
           placeholder={t('saveName')}
           value={saveName}
           onChange={(e) => setSaveName(e.target.value)}
           onPressEnter={save}
+          style={{ borderRadius: 8 }}
+          size="large"
         />
       </Modal>
 
       {/* Load drawer */}
-      <Drawer title={t('loadTopology')} open={open} onClose={() => setOpen(false)} width={360}>
+      <Drawer title={t('loadTopology')} open={open} onClose={() => setOpen(false)} width={380}>
         {list.length === 0 ? (
-          <Typography.Text type="secondary">{t('noSaved')}</Typography.Text>
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Typography.Text type="secondary" style={{ fontSize: 13 }}>{t('noSaved')}</Typography.Text>
+          </div>
         ) : (
           <List
             dataSource={list}
             renderItem={(item) => (
               <List.Item
+                style={{ borderRadius: 10, padding: '12px 14px', background: '#fafbfc', marginBottom: 8, border: '1px solid #f1f5f9' }}
                 actions={[
-                  <Button size="small" type="link" onClick={() => load(item)}>{t('loadBtn')}</Button>,
+                  <Button size="small" type="primary" onClick={() => load(item)} style={{ borderRadius: 7, fontWeight: 500, fontSize: 11 }}>{t('loadBtn')}</Button>,
                   <Popconfirm title={t('confirmDelete')} onConfirm={() => del(item.id)}>
-                    <Button size="small" type="link" danger>{t('deleteBtn')}</Button>
+                    <Button size="small" type="text" danger style={{ fontSize: 11 }}>{t('deleteBtn')}</Button>
                   </Popconfirm>,
                 ]}
               >
                 <List.Item.Meta
-                  title={item.name}
-                  description={`${t('deviceCount', { count: item.nodes.length })} · ${new Date(item.updatedAt).toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US')}`}
+                  title={<span style={{ fontWeight: 600, fontSize: 13, color: '#0f172a' }}>{item.name}</span>}
+                  description={<span style={{ fontSize: 11.5, color: '#94a3b8' }}>{t('deviceCount', { count: item.nodes.length })} · {new Date(item.updatedAt).toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US')}</span>}
                 />
               </List.Item>
             )}

@@ -35,15 +35,15 @@ function ParamForm({ type, params, set, t }: {
 }) {
   const num = (k: keyof Params, labelKey: string, min: number, step: number, suffix: string) => (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{t(labelKey)}</div>
+      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 3, fontWeight: 500 }}>{t(labelKey)}</div>
       <InputNumber size="small" min={min} step={step} value={params[k] as number}
-        onChange={(v) => v != null && set(k, v)} addonAfter={suffix} style={{ width: '100%' }} />
+        onChange={(v) => v != null && set(k, v)} addonAfter={suffix} style={{ width: '100%', borderRadius: 8, borderColor: '#e2e8f0' }} />
     </div>
   );
   const sel = (k: keyof Params, labelKey: string, opts: string[]) => (
     <div style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>{t(labelKey)}</div>
-      <Select size="small" value={params[k] as string} onChange={(v) => set(k, v)} style={{ width: '100%' }}>
+      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 3, fontWeight: 500 }}>{t(labelKey)}</div>
+      <Select size="small" value={params[k] as string} onChange={(v) => set(k, v)} style={{ width: '100%', borderRadius: 8 }}>
         {opts.map((o) => <Select.Option key={o} value={o}>{o}</Select.Option>)}
       </Select>
     </div>
@@ -161,23 +161,34 @@ export function BottomToolbar() {
   return (
     <div style={{
       display: 'flex', alignItems: 'stretch', gap: 0,
-      background: '#fff', borderTop: '1px solid #e5e7eb',
-      height: 108, flexShrink: 0, overflow: 'hidden',
+      background: 'linear-gradient(180deg,#ffffff 0%,#f8fafc 100%)',
+      borderTop: '1px solid #e2e8f0',
+      height: 112, flexShrink: 0, overflow: 'hidden',
+      boxShadow: '0 -2px 8px rgba(0,0,0,0.03)',
     }}>
       {/* Left: AI hint */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '0 14px', gap: 6, background: 'linear-gradient(180deg,#f0f9ff 0%,#e0f2fe 100%)',
-        borderRight: '1px solid #e5e7eb', minWidth: 90,
+        padding: '0 16px', gap: 6,
+        background: 'linear-gradient(180deg,#f0f9ff 0%,#e0f2fe 100%)',
+        borderRight: '1px solid #e2e8f0', minWidth: 96,
       }}>
-        <RobotOutlined style={{ fontSize: 22, color: '#1677ff' }} />
-        <Typography.Text style={{ fontSize: 10, color: '#1677ff', textAlign: 'center', lineHeight: 1.3, whiteSpace: 'pre-line' }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 10,
+          background: 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(14,165,233,0.25)',
+          marginBottom: 2,
+        }}>
+          <RobotOutlined style={{ fontSize: 17, color: '#fff' }} />
+        </div>
+        <Typography.Text style={{ fontSize: 10.5, color: '#0369a1', textAlign: 'center', lineHeight: 1.3, whiteSpace: 'pre-line', fontWeight: 500 }}>
           {t('aiDialogHint')}
         </Typography.Text>
       </div>
 
       {/* Center: device cards */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px', overflowX: 'auto' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', overflowX: 'auto' }}>
         {DEVICES.map((type) => {
           const Icon   = DEVICE_ICON[type];
           const accent = ACCENT[type];
@@ -190,17 +201,21 @@ export function BottomToolbar() {
               onOpenChange={(v) => setOpen(v ? type : null)}
               trigger="click"
               placement="top"
+              overlayStyle={{ borderRadius: 12 }}
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Icon size={20} />
-                  <span style={{ color: accent, fontWeight: 600 }}>{label} {t('paramSettings')}</span>
+                  <Icon size={22} />
+                  <span style={{ color: accent, fontWeight: 600, fontSize: 13 }}>{label} {t('paramSettings')}</span>
                 </div>
               }
               content={
                 <div>
                   <ParamForm type={type} params={params} set={setParam} t={t} />
                   <Button type="primary" block size="small" icon={<PlusOutlined />}
-                    style={{ background: accent, borderColor: accent, marginTop: 4 }}
+                    style={{
+                      background: accent, borderColor: accent, marginTop: 6, borderRadius: 8,
+                      fontWeight: 600, height: 32, boxShadow: `0 2px 6px ${accent}30`,
+                    }}
                     onClick={() => addNode(type)}>
                     {t('addToCanvas')}
                   </Button>
@@ -209,22 +224,24 @@ export function BottomToolbar() {
             >
               <div style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
-                width: 82, height: 88, padding: '8px 6px 6px',
-                background: open === type ? bg : '#fafafa',
-                border: `1.5px solid ${open === type ? accent : '#e5e7eb'}`,
-                borderRadius: 8, cursor: 'pointer', flexShrink: 0,
-                transition: 'all 0.15s',
-                boxShadow: open === type ? `0 0 0 2px ${accent}33` : 'none',
+                width: 86, height: 92, padding: '10px 8px 7px',
+                background: open === type ? '#fff' : '#fafbfc',
+                border: `1.5px solid ${open === type ? accent : '#e8ecf0'}`,
+                borderRadius: 12, cursor: 'pointer', flexShrink: 0,
+                transition: 'all 0.2s ease',
+                boxShadow: open === type
+                  ? `0 4px 14px ${accent}22, 0 0 0 3px ${accent}15`
+                  : '0 1px 3px rgba(0,0,0,0.03)',
               }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = accent; (e.currentTarget as HTMLDivElement).style.background = bg; }}
-                onMouseLeave={(e) => { if (open !== type) { (e.currentTarget as HTMLDivElement).style.borderColor = '#e5e7eb'; (e.currentTarget as HTMLDivElement).style.background = '#fafafa'; } }}
+                onMouseEnter={(e) => { if (open !== type) { (e.currentTarget as HTMLElement).style.borderColor = accent + '88'; (e.currentTarget as HTMLElement).style.background = '#fff'; (e.currentTarget as HTMLElement).style.boxShadow = `0 2px 8px rgba(0,0,0,0.06)`; } }}
+                onMouseLeave={(e) => { if (open !== type) { (e.currentTarget as HTMLElement).style.borderColor = '#e8ecf0'; (e.currentTarget as HTMLElement).style.background = '#fafbfc'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; } }}
               >
-                <Icon size={32} />
-                <Typography.Text style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginTop: 2 }}>
+                <Icon size={34} />
+                <Typography.Text style={{ fontSize: 11.5, fontWeight: 600, color: '#334155', marginTop: 2, letterSpacing: '-0.01em' }}>
                   {label}
                 </Typography.Text>
                 <Tooltip title={t('clickToAdd')}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: accent, fontWeight: 500 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10.5, color: accent, fontWeight: 600 }}>
                     <PlusOutlined style={{ fontSize: 9 }} /> {t('addDevice')}
                   </div>
                 </Tooltip>
@@ -234,16 +251,16 @@ export function BottomToolbar() {
         })}
       </div>
 
-      <Divider type="vertical" style={{ height: '60%', alignSelf: 'center', margin: '0 4px' }} />
+      <Divider type="vertical" style={{ height: '60%', alignSelf: 'center', margin: '0 6px' }} />
 
       {/* Right: delete */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px' }}>
         <Tooltip title={selectedNodeId ? t('deleteSelectedTip') : t('selectFirstTip')}>
           <Button
             danger icon={<DeleteOutlined />} size="small"
             disabled={!selectedNodeId}
             onClick={handleDelete}
-            style={{ fontSize: 12 }}
+            style={{ fontSize: 12, borderRadius: 8, fontWeight: 500 }}
           >
             {t('deleteSelected')}
           </Button>

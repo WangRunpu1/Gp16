@@ -10,14 +10,15 @@ import { Space } from 'antd';
 
 export function CanvasPage() {
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', background: '#f1f5f9' }}>
 
       {/* Left: AI Chat Panel */}
       <div style={{
-        width: 300, flexShrink: 0,
-        borderRight: '1px solid #e5e7eb',
+        width: 310, flexShrink: 0,
+        borderRight: '1px solid #e2e8f0',
         display: 'flex', flexDirection: 'column',
         background: '#fff',
+        boxShadow: '2px 0 8px rgba(0,0,0,0.03)',
       }}>
         <AIChatPanel />
       </div>
@@ -38,13 +39,14 @@ export function CanvasPage() {
 
       {/* Right: Analytics Panel */}
       <div style={{
-        width: 290, flexShrink: 0,
-        borderLeft: '1px solid #e5e7eb',
+        width: 300, flexShrink: 0,
+        borderLeft: '1px solid #e2e8f0',
         overflowY: 'auto', background: '#fff',
         display: 'flex', flexDirection: 'column',
+        boxShadow: '-2px 0 8px rgba(0,0,0,0.03)',
       }}>
         <AnalyticsPanel />
-        <div style={{ padding: '8px 10px', borderTop: '1px solid #f0f0f0', marginTop: 'auto' }}>
+        <div style={{ padding: '10px 12px 12px', borderTop: '1px solid #f1f5f9', marginTop: 'auto', background: '#fafbfc' }}>
           <Space direction="vertical" style={{ width: '100%' }} size={6}>
             <TopologyManager />
             <ReportButton />

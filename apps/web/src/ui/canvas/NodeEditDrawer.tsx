@@ -9,8 +9,8 @@ import { ACCENT, LABEL_KEY } from '@/theme';
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4, fontWeight: 500 }}>{label}</div>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 11, color: '#64748b', marginBottom: 5, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.3px' }}>{label}</div>
       {children}
     </div>
   );
@@ -23,7 +23,7 @@ function NumField({ label, value, min, step, suffix, onChange }: {
   return (
     <Field label={label}>
       <InputNumber size="small" min={min} step={step} value={value}
-        onChange={(v) => v != null && onChange(v)} addonAfter={suffix} style={{ width: '100%' }} />
+        onChange={(v) => v != null && onChange(v)} addonAfter={suffix} style={{ width: '100%', borderRadius: 8, borderColor: '#e2e8f0' }} />
     </Field>
   );
 }
@@ -33,7 +33,7 @@ function SelField({ label, value, opts, onChange }: {
 }) {
   return (
     <Field label={label}>
-      <Select size="small" value={value} onChange={onChange} style={{ width: '100%' }}>
+      <Select size="small" value={value} onChange={onChange} style={{ width: '100%', borderRadius: 8 }}>
         {opts.map((o) => <Select.Option key={o} value={o}>{o}</Select.Option>)}
       </Select>
     </Field>
@@ -120,24 +120,34 @@ export function NodeEditDrawer() {
     <Drawer
       open={!!node}
       onClose={() => setSelectedId(null)}
-      width={280}
+      width={300}
       placement="right"
       mask={false}
       style={{ position: 'absolute' }}
       getContainer={false}
+      styles={{
+        header: { borderBottom: '1px solid #f1f5f9', padding: '16px 20px' },
+        body: { padding: '16px 20px 24px', background: '#fafbfc' },
+      }}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Icon size={22} />
-          <span style={{ fontWeight: 700, color: accent }}>{t(LABEL_KEY[type])}</span>
-          <Tag color={accent} style={{ marginLeft: 4, fontSize: 10 }}>{t('editParams')}</Tag>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: accent + '12', border: `1px solid ${accent}25`,
+          }}>
+            <Icon size={24} />
+          </div>
+          <div>
+            <span style={{ fontWeight: 700, color: accent, fontSize: 14, letterSpacing: '-0.01em' }}>{t(LABEL_KEY[type])}</span>
+            <Tag color={accent} style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, borderRadius: 6 }}>{t('editParams')}</Tag>
+          </div>
         </div>
       }
       extra={
-        <Button danger size="small" icon={<DeleteOutlined />} onClick={handleDelete}>
+        <Button danger size="small" icon={<DeleteOutlined />} onClick={handleDelete} style={{ borderRadius: 8, fontWeight: 500 }}>
           {t('deleteBtn')}
         </Button>
       }
-      styles={{ body: { padding: '16px 16px 0' } }}
     >
       <Field label={t('deviceName')}>
         <Typography.Text
@@ -145,30 +155,33 @@ export function NodeEditDrawer() {
             icon: <EditOutlined style={{ color: accent }} />,
             onChange: (v) => updateNode(node.id, { label: v }),
           }}
-          style={{ fontSize: 13, fontWeight: 600 }}
+          style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}
         >
           {node.data.label}
         </Typography.Text>
       </Field>
 
-      <Divider style={{ margin: '8px 0 12px' }} />
+      <Divider style={{ margin: '10px 0 16px', borderColor: '#f1f5f9' }} />
 
       <NodeFields node={node} update={(d) => updateNode(node.id, d)} t={t} />
 
-      <Divider style={{ margin: '8px 0 12px' }} />
+      <Divider style={{ margin: '10px 0 14px', borderColor: '#f1f5f9' }} />
 
-      <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px' }}>
-        <Typography.Text style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 6 }}>
+      <div style={{
+        background: '#fff', borderRadius: 10, padding: '12px 14px',
+        border: '1px solid #f1f5f9',
+      }}>
+        <Typography.Text style={{ fontSize: 11, color: '#64748b', display: 'block', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
           {t('paramSummary')}
         </Typography.Text>
-        <Space wrap size={4}>
-          {node.data.ratedPowerKw != null && <Tag color="blue">{node.data.ratedPowerKw} kW</Tag>}
-          {node.data.capacityKwh  != null && <Tag color="green">{node.data.capacityKwh} kWh</Tag>}
-          {node.data.efficiency   != null && <Tag color="orange">{t('efficiencyTag')} {node.data.efficiency}%</Tag>}
-          {node.data.chemistry    && <Tag color="purple">{node.data.chemistry}</Tag>}
-          {node.data.inverterType && <Tag>{node.data.inverterType}</Tag>}
-          {node.data.loadType     && <Tag>{node.data.loadType}</Tag>}
-          {node.data.gridType     && <Tag>{node.data.gridType}</Tag>}
+        <Space wrap size={6}>
+          {node.data.ratedPowerKw != null && <Tag color="blue" style={{ borderRadius: 6, fontWeight: 500 }}>{node.data.ratedPowerKw} kW</Tag>}
+          {node.data.capacityKwh  != null && <Tag color="green" style={{ borderRadius: 6, fontWeight: 500 }}>{node.data.capacityKwh} kWh</Tag>}
+          {node.data.efficiency   != null && <Tag color="orange" style={{ borderRadius: 6, fontWeight: 500 }}>{t('efficiencyTag')} {node.data.efficiency}%</Tag>}
+          {node.data.chemistry    && <Tag color="purple" style={{ borderRadius: 6, fontWeight: 500 }}>{node.data.chemistry}</Tag>}
+          {node.data.inverterType && <Tag style={{ borderRadius: 6, fontWeight: 500 }}>{node.data.inverterType}</Tag>}
+          {node.data.loadType     && <Tag style={{ borderRadius: 6, fontWeight: 500 }}>{node.data.loadType}</Tag>}
+          {node.data.gridType     && <Tag style={{ borderRadius: 6, fontWeight: 500 }}>{node.data.gridType}</Tag>}
         </Space>
       </div>
     </Drawer>

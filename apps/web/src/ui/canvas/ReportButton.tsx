@@ -47,7 +47,15 @@ export function ReportButton() {
       disabled={nodes.length === 0}
       icon={<FilePdfOutlined />}
       block
-      style={{ fontWeight: 600 }}
+      size="small"
+      style={{
+        fontWeight: 600,
+        borderRadius: 8,
+        background: nodes.length === 0 ? undefined : 'linear-gradient(135deg, #ef4444, #dc2626)',
+        border: 'none',
+        boxShadow: nodes.length === 0 ? undefined : '0 2px 6px rgba(239,68,68,0.25)',
+        fontSize: 12,
+      }}
     >
       {loading ? t('reportGenerating') : t('generateReport')}
     </Button>

@@ -41,31 +41,49 @@ function DeviceNode({ data, selected }: { data: NodeData; selected?: boolean }) 
 
   return (
     <div style={{
-      width: 140, borderRadius: 10, background: bg,
-      border: `2px solid ${selected ? accent : accent + '99'}`,
-      boxShadow: selected ? `0 0 0 3px ${accent}44` : '0 2px 8px rgba(0,0,0,0.10)',
+      width: 150, borderRadius: 14, background: '#fff',
+      border: `2px solid ${selected ? accent : accent + '55'}`,
+      boxShadow: selected
+        ? `0 0 0 3px ${accent}33, 0 6px 20px rgba(0,0,0,0.08)`
+        : '0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
       position: 'relative',
+      overflow: 'hidden',
+      transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
     }}>
       <Handle type="target" position={Position.Left}
-        style={{ width: 10, height: 10, background: '#fff', border: `2px solid ${accent}` }} />
+        style={{ width: 12, height: 12, background: '#fff', border: `2.5px solid ${accent}`, borderRadius: '50%', left: -6, zIndex: 2 }} />
 
-      <div style={{ height: 4, background: accent, borderRadius: '8px 8px 0 0' }} />
+      {/* Colored top bar */}
+      <div style={{ height: 5, background: `linear-gradient(90deg, ${accent}, ${accent}cc)`, borderRadius: '12px 12px 0 0' }} />
 
-      <div style={{ padding: '8px 10px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <Icon size={34} />
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#1e293b', textAlign: 'center', lineHeight: 1.3 }}>
+      <div style={{ padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        {/* Icon with subtle bg */}
+        <div style={{
+          width: 52, height: 52, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: bg, marginBottom: 2,
+          border: `1px solid ${accent}22`,
+        }}>
+          <Icon size={38} />
+        </div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a', textAlign: 'center', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
           {data.label}
         </div>
         {spec && (
-          <div style={{ fontSize: 10, color: '#fff', background: accent, borderRadius: 10, padding: '1px 8px', fontWeight: 600 }}>
+          <div style={{
+            fontSize: 10.5, color: '#fff', background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+            borderRadius: 12, padding: '2px 10px', fontWeight: 600, letterSpacing: '0.02em',
+            boxShadow: `0 1px 3px ${accent}30`,
+          }}>
             {spec}
           </div>
         )}
-        <div style={{ fontSize: 10, color: accent, fontWeight: 500 }}>{t(NODE_LABEL_KEY[type])}</div>
+        <div style={{ fontSize: 10, color: accent, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {t(NODE_LABEL_KEY[type])}
+        </div>
       </div>
 
       <Handle type="source" position={Position.Right}
-        style={{ width: 10, height: 10, background: '#fff', border: `2px solid ${accent}` }} />
+        style={{ width: 12, height: 12, background: '#fff', border: `2.5px solid ${accent}`, borderRadius: '50%', right: -6, zIndex: 2 }} />
     </div>
   );
 }
@@ -96,10 +114,10 @@ function toRFEdges(storeEdges: any[], storeNodes: any[], t: (k: string) => strin
     return {
       id: e.id, source: e.source, target: e.target,
       label: lbl,
-      labelStyle: { fontSize: 10, fill: '#64748b' },
-      labelBgStyle: { fill: '#f8fafc', fillOpacity: 0.9 },
-      labelBgPadding: [4, 2] as [number, number],
-      style: { stroke: '#94a3b8', strokeWidth: 2 },
+      labelStyle: { fontSize: 10.5, fill: '#64748b', fontWeight: 500 },
+      labelBgStyle: { fill: '#f8fafc', fillOpacity: 0.95, rx: 4, ry: 4 },
+      labelBgPadding: [5, 3] as [number, number],
+      style: { stroke: '#cbd5e1', strokeWidth: 2 },
       markerEnd: { type: 'arrowclosed' as any, color: '#94a3b8' },
     };
   });
@@ -196,11 +214,20 @@ export function TopologyCanvas() {
         nodeTypes={nodeTypes}
         deleteKeyCode="Delete"
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        connectionLineStyle={{ stroke: '#94a3b8', strokeWidth: 2 }}
+        connectionLineStyle={{ stroke: '#cbd5e1', strokeWidth: 2 }}
+        fitView
       >
-        <MiniMap nodeColor={(n) => ACCENT[(n.data as NodeData)?.deviceType] ?? '#d9d9d9'} style={{ background: '#f8fafc' }} />
-        <Controls />
-        <Background color="#e2e8f0" gap={20} />
+        <MiniMap
+          nodeColor={(n) => ACCENT[(n.data as NodeData)?.deviceType] ?? '#d9d9d9'}
+          style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+          nodeBorderRadius={4}
+          maskColor="#f1f5f933"
+        />
+        <Controls style={{
+          background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        }} />
+        <Background color="#e2e8f0" gap={20} size={1} style={{ opacity: 0.5 }} />
       </ReactFlow>
     </div>
   );

@@ -1,5 +1,5 @@
 import { Button, Input, Spin, Tag, Typography } from 'antd';
-import { SendOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { SendOutlined, ThunderboltOutlined, RobotOutlined, UserOutlined } from '@ant-design/icons';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
@@ -88,43 +88,56 @@ export function AIChatPanel() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fff' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#fafbfc' }}>
       {/* Header */}
       <div style={{
-        padding: '10px 12px', borderBottom: '1px solid #e5e7eb',
-        background: 'linear-gradient(135deg,#1677ff 0%,#0ea5e9 100%)',
+        padding: '12px 14px', borderBottom: '1px solid #e5e7eb',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-          }}>🤖</div>
+            width: 32, height: 32, borderRadius: 10,
+            background: 'linear-gradient(135deg,#06b6d4,#3b82f6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 6px rgba(6,182,212,0.3)',
+          }}>
+            <RobotOutlined style={{ fontSize: 16, color: '#fff' }} />
+          </div>
           <div>
-            <Typography.Text style={{ color: '#fff', fontWeight: 700, fontSize: 13, display: 'block', lineHeight: 1.2 }}>
+            <Typography.Text style={{ color: '#fff', fontWeight: 700, fontSize: 13.5, display: 'block', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
               {t('aiAssistant')}
             </Typography.Text>
-            <Typography.Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>
+            <Typography.Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10.5 }}>
               {t('aiSubtitle')}
             </Typography.Text>
           </div>
         </div>
-        <Button size="small" ghost onClick={handleClear} style={{ fontSize: 11 }}>
+        <Button size="small" ghost onClick={handleClear} style={{
+          fontSize: 11, color: 'rgba(255,255,255,0.65)', borderColor: 'rgba(255,255,255,0.15)',
+          borderRadius: 7, height: 28, fontWeight: 500,
+        }}>
           {t('clearCanvas')}
         </Button>
       </div>
 
       {/* Quick scenarios */}
-      <div style={{ padding: '8px 10px', borderBottom: '1px solid #f0f0f0', background: '#fafafa' }}>
-        <div style={{ fontSize: 10, color: '#94a3b8', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
-          <ThunderboltOutlined style={{ fontSize: 10 }} /> {t('quickScenarios')}
+      <div style={{ padding: '8px 12px', borderBottom: '1px solid #f1f5f9', background: '#fff' }}>
+        <div style={{ fontSize: 10.5, color: '#94a3b8', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <ThunderboltOutlined style={{ fontSize: 10, color: '#f59e0b' }} /> {t('quickScenarios')}
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
           {QUICK_SCENARIOS.map((s) => (
             <Tag
               key={s.labelKey}
-              color="blue"
-              style={{ cursor: 'pointer', fontSize: 10, padding: '1px 7px', borderRadius: 10 }}
+              style={{
+                cursor: 'pointer', fontSize: 11, padding: '2px 10px', borderRadius: 8,
+                background: '#eff6ff', border: '1px solid #dbeafe', color: '#2563eb',
+                fontWeight: 500, transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#dbeafe'; (e.currentTarget as HTMLElement).style.borderColor = '#bfdbfe'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = '#eff6ff'; (e.currentTarget as HTMLElement).style.borderColor = '#dbeafe'; }}
               onClick={() => !loading && sendMessage(t(s.promptKey))}
             >
               {t(s.labelKey)}
@@ -134,7 +147,7 @@ export function AIChatPanel() {
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 14, background: '#fafbfc' }}>
         {messages.map((msg, i) => (
           <div key={i} style={{
             display: 'flex',
@@ -142,26 +155,34 @@ export function AIChatPanel() {
             alignItems: 'flex-start', gap: 8,
           }}>
             <div style={{
-              width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-              background: msg.role === 'user' ? '#1677ff' : '#f0fdf4',
-              border: msg.role === 'assistant' ? '1px solid #86efac' : 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+              width: 28, height: 28, borderRadius: 9, flexShrink: 0,
+              background: msg.role === 'user'
+                ? 'linear-gradient(135deg,#3b82f6,#2563eb)'
+                : 'linear-gradient(135deg,#06b6d4,#22c55e)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+              color: '#fff', fontSize: 13, fontWeight: 600,
             }}>
-              {msg.role === 'user' ? '👤' : '🤖'}
+              {msg.role === 'user' ? <UserOutlined /> : <RobotOutlined />}
             </div>
             <div style={{
-              maxWidth: '82%', padding: '8px 11px',
-              borderRadius: msg.role === 'user' ? '12px 2px 12px 12px' : '2px 12px 12px 12px',
-              background: msg.role === 'user' ? '#1677ff' : '#f8fafc',
+              maxWidth: '84%', padding: '9px 13px',
+              borderRadius: msg.role === 'user' ? '14px 4px 14px 14px' : '4px 14px 14px 14px',
+              background: msg.role === 'user'
+                ? 'linear-gradient(135deg,#3b82f6,#2563eb)'
+                : '#fff',
               border: msg.role === 'assistant' ? '1px solid #e2e8f0' : 'none',
-              fontSize: 12, lineHeight: 1.65,
-              color: msg.role === 'user' ? '#fff' : '#1e293b',
+              boxShadow: msg.role === 'user'
+                ? '0 2px 8px rgba(37,99,235,0.25)'
+                : '0 1px 3px rgba(0,0,0,0.04)',
+              fontSize: 12.5, lineHeight: 1.7,
+              color: msg.role === 'user' ? '#fff' : '#334155',
               whiteSpace: 'pre-wrap', wordBreak: 'break-word',
             }}>
               {msg.loading ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Spin size="small" />
-                  <span style={{ color: '#64748b', fontSize: 11 }}>{t('aiGeneratingMsg')}</span>
+                  <Spin size="small" style={{ color: '#94a3b8' }} />
+                  <span style={{ color: '#94a3b8', fontSize: 11.5 }}>{t('aiGeneratingMsg')}</span>
                 </div>
               ) : msg.content}
             </div>
@@ -171,8 +192,8 @@ export function AIChatPanel() {
       </div>
 
       {/* Input */}
-      <div style={{ padding: '10px', borderTop: '1px solid #e5e7eb', background: '#fafafa' }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+      <div style={{ padding: '10px 12px 12px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
           <Input.TextArea
             placeholder={t('aiInputPlaceholder')}
             value={input}
@@ -180,17 +201,25 @@ export function AIChatPanel() {
             onPressEnter={(e) => { if (!e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             disabled={loading}
             autoSize={{ minRows: 2, maxRows: 4 }}
-            style={{ fontSize: 12, resize: 'none' }}
+            style={{
+              fontSize: 12.5, resize: 'none', borderRadius: 10,
+              border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+            }}
           />
           <Button
             type="primary" icon={<SendOutlined />}
             onClick={() => sendMessage()}
             loading={loading}
             disabled={!input.trim()}
-            style={{ height: 'auto', alignSelf: 'flex-end', paddingInline: 12 }}
+            style={{
+              height: 38, borderRadius: 10, paddingInline: 14,
+              background: 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
+              border: 'none', boxShadow: '0 2px 6px rgba(14,165,233,0.3)',
+              fontSize: 13, fontWeight: 500, flexShrink: 0,
+            }}
           />
         </div>
-        <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+        <div style={{ fontSize: 10.5, color: '#94a3b8', marginTop: 5, textAlign: 'center' }}>
           {t('aiEnterHint')}
         </div>
       </div>
