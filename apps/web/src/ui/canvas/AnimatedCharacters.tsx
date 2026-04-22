@@ -24,12 +24,6 @@ const blackStyle: React.CSSProperties = {
   backgroundColor: '#2D2D2D', borderRadius: '16px 16px 8px 8px', zIndex: 2,
   transformOrigin: 'bottom center', willChange: 'transform',
 };
-// Orange: solar panel array (wide flat body with tilted panels and mounting stand)
-const orangeStyle: React.CSSProperties = {
-  position: 'absolute', bottom: 0, left: 0, width: '240px', height: '260px',
-  backgroundColor: 'transparent', zIndex: 3,
-  transformOrigin: 'bottom center', willChange: 'transform',
-};
 // Yellow: solar panel character (round head + panel body)
 const yellowStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: '310px', width: '140px', height: '230px',
@@ -38,7 +32,6 @@ const yellowStyle: React.CSSProperties = {
 };
 const purpleFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '45px', top: '40px' };
 const blackFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '26px', top: '32px' };
-const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '60px' };
 const yellowFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '52px', top: '40px' };
 const yellowMouthStyle: React.CSSProperties = {
   position: 'absolute', width: '80px', height: '4px', backgroundColor: '#2D2D2D',
@@ -52,10 +45,10 @@ const dotPupilStyle: React.CSSProperties = { width: '12px', height: '12px', bord
 
 type QuickToFunc = gsap.QuickToFunc;
 interface QuickTos {
-  purpleSkew: QuickToFunc; blackSkew: QuickToFunc; orangeSkew: QuickToFunc; yellowSkew: QuickToFunc;
+  purpleSkew: QuickToFunc; blackSkew: QuickToFunc; yellowSkew: QuickToFunc;
   purpleX: QuickToFunc; blackX: QuickToFunc; purpleHeight: QuickToFunc;
   purpleFaceLeft: QuickToFunc; purpleFaceTop: QuickToFunc; blackFaceLeft: QuickToFunc; blackFaceTop: QuickToFunc;
-  orangeFaceX: QuickToFunc; orangeFaceY: QuickToFunc; yellowFaceX: QuickToFunc; yellowFaceY: QuickToFunc;
+  yellowFaceX: QuickToFunc; yellowFaceY: QuickToFunc;
   mouthX: QuickToFunc; mouthY: QuickToFunc;
 }
 
@@ -63,11 +56,9 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
   const containerRef = useRef<HTMLDivElement>(null);
   const purpleRef = useRef<HTMLDivElement>(null);
   const blackRef = useRef<HTMLDivElement>(null);
-  const orangeRef = useRef<HTMLDivElement>(null);
   const yellowRef = useRef<HTMLDivElement>(null);
   const purpleFaceRef = useRef<HTMLDivElement>(null);
   const blackFaceRef = useRef<HTMLDivElement>(null);
-  const orangeFaceRef = useRef<HTMLDivElement>(null);
   const yellowFaceRef = useRef<HTMLDivElement>(null);
   const yellowMouthRef = useRef<HTMLDivElement>(null);
 
@@ -126,11 +117,10 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
   const applyShowPassword = useCallback(() => {
     const qt = quickToRef.current;
     if (qt) {
-      qt.purpleSkew(0); qt.blackSkew(0); qt.orangeSkew(0); qt.yellowSkew(0);
+      qt.purpleSkew(0); qt.blackSkew(0); qt.yellowSkew(0);
       qt.purpleX(0); qt.blackX(0); qt.purpleHeight(400);
       qt.purpleFaceLeft(20); qt.purpleFaceTop(35);
       qt.blackFaceLeft(10); qt.blackFaceTop(28);
-      qt.orangeFaceX(50 - 82); qt.orangeFaceY(85 - 60);
       qt.yellowFaceX(20 - 52); qt.yellowFaceY(35 - 40);
       qt.mouthX(10 - 40); qt.mouthY(0);
     }
@@ -140,9 +130,6 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
     blackRef.current?.querySelectorAll('.eyeball-pupil').forEach((p) => {
       gsap.to(p, { x: -4, y: -4, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
     });
-    orangeRef.current?.querySelectorAll('.pupil').forEach((p) => {
-      gsap.to(p, { x: -5, y: -4, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
-    });
     yellowRef.current?.querySelectorAll('.pupil').forEach((p) => {
       gsap.to(p, { x: -5, y: -4, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
     });
@@ -151,11 +138,10 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
   const applyPasswordGuardMode = useCallback(() => {
     const qt = quickToRef.current;
     if (qt) {
-      qt.purpleSkew(0); qt.blackSkew(0); qt.orangeSkew(0); qt.yellowSkew(0);
+      qt.purpleSkew(0); qt.blackSkew(0); qt.yellowSkew(0);
       qt.purpleX(0); qt.blackX(0); qt.purpleHeight(400);
       qt.purpleFaceLeft(24); qt.purpleFaceTop(22);
       qt.blackFaceLeft(14); qt.blackFaceTop(20);
-      qt.orangeFaceX(22 - 82); qt.orangeFaceY(72 - 60);
       qt.yellowFaceX(12 - 52); qt.yellowFaceY(22 - 40);
       qt.mouthX(-14); qt.mouthY(-8);
     }
@@ -164,9 +150,6 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
     });
     blackRef.current?.querySelectorAll('.eyeball-pupil').forEach((p) => {
       gsap.to(p, { x: -4, y: -4, duration: 0.25, ease: 'power2.out', overwrite: 'auto' });
-    });
-    orangeRef.current?.querySelectorAll('.pupil').forEach((p) => {
-      gsap.to(p, { x: -5, y: -5, duration: 0.25, ease: 'power2.out', overwrite: 'auto' });
     });
     yellowRef.current?.querySelectorAll('.pupil').forEach((p) => {
       gsap.to(p, { x: -5, y: -5, duration: 0.25, ease: 'power2.out', overwrite: 'auto' });
@@ -201,10 +184,6 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
       } else {
         qt.blackSkew(bp.bodySkew); qt.blackX(0);
       }
-    }
-    if (orangeRef.current && !isShowingPassword) {
-      const op = calcPos(orangeRef.current);
-      qt.orangeSkew(op.bodySkew); qt.orangeFaceX(op.faceX); qt.orangeFaceY(op.faceY);
     }
     if (yellowRef.current && !isShowingPassword) {
       const yp = calcPos(yellowRef.current);
@@ -245,14 +224,13 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
     gsap.set('.pupil', { x: 0, y: 0 });
     gsap.set('.eyeball-pupil', { x: 0, y: 0 });
 
-    if (!purpleRef.current || !blackRef.current || !orangeRef.current || !yellowRef.current
-      || !purpleFaceRef.current || !blackFaceRef.current || !orangeFaceRef.current
+    if (!purpleRef.current || !blackRef.current || !yellowRef.current
+      || !purpleFaceRef.current || !blackFaceRef.current
       || !yellowFaceRef.current || !yellowMouthRef.current) return;
 
     quickToRef.current = {
       purpleSkew: gsap.quickTo(purpleRef.current, 'skewX', { duration: 0.3, ease: 'power2.out' }),
       blackSkew: gsap.quickTo(blackRef.current, 'skewX', { duration: 0.3, ease: 'power2.out' }),
-      orangeSkew: gsap.quickTo(orangeRef.current, 'skewX', { duration: 0.3, ease: 'power2.out' }),
       yellowSkew: gsap.quickTo(yellowRef.current, 'skewX', { duration: 0.3, ease: 'power2.out' }),
       purpleX: gsap.quickTo(purpleRef.current, 'x', { duration: 0.3, ease: 'power2.out' }),
       blackX: gsap.quickTo(blackRef.current, 'x', { duration: 0.3, ease: 'power2.out' }),
@@ -261,8 +239,6 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
       purpleFaceTop: gsap.quickTo(purpleFaceRef.current, 'top', { duration: 0.3, ease: 'power2.out' }),
       blackFaceLeft: gsap.quickTo(blackFaceRef.current, 'left', { duration: 0.3, ease: 'power2.out' }),
       blackFaceTop: gsap.quickTo(blackFaceRef.current, 'top', { duration: 0.3, ease: 'power2.out' }),
-      orangeFaceX: gsap.quickTo(orangeFaceRef.current, 'x', { duration: 0.2, ease: 'power2.out' }),
-      orangeFaceY: gsap.quickTo(orangeFaceRef.current, 'y', { duration: 0.2, ease: 'power2.out' }),
       yellowFaceX: gsap.quickTo(yellowFaceRef.current, 'x', { duration: 0.2, ease: 'power2.out' }),
       yellowFaceY: gsap.quickTo(yellowFaceRef.current, 'y', { duration: 0.2, ease: 'power2.out' }),
       mouthX: gsap.quickTo(yellowMouthRef.current, 'x', { duration: 0.2, ease: 'power2.out' }),
@@ -461,8 +437,11 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
         </div>
       </div>
 
-      {/* Orange: solar panel array with tilted panels and mounting stand */}
-      <div ref={orangeRef} style={orangeStyle}>
+      {/* Orange: static solar panel (fixed, no animation) */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, width: '240px', height: '260px',
+        zIndex: 3, transformOrigin: 'bottom center',
+      }}>
         {/* Mounting pole */}
         <div style={{
           position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
@@ -497,11 +476,6 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
             background: 'rgba(255,255,255,0.12)', borderRadius: '50%',
             transform: 'rotate(45deg)',
           }} />
-        </div>
-        {/* Face sits on top of the panel */}
-        <div ref={orangeFaceRef} style={{ ...orangeFaceStyle, top: 10 }}>
-          <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
-          <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
         </div>
       </div>
 
