@@ -38,7 +38,7 @@ const yellowStyle: React.CSSProperties = {
 };
 const purpleFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '45px', top: '40px' };
 const blackFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '26px', top: '32px' };
-const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '-18px' };
+const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '60px' };
 const yellowFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '52px', top: '40px' };
 const yellowMouthStyle: React.CSSProperties = {
   position: 'absolute', width: '80px', height: '4px', backgroundColor: '#2D2D2D',
@@ -130,7 +130,7 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
       qt.purpleX(0); qt.blackX(0); qt.purpleHeight(400);
       qt.purpleFaceLeft(20); qt.purpleFaceTop(35);
       qt.blackFaceLeft(10); qt.blackFaceTop(28);
-      qt.orangeFaceX(50 - 82); qt.orangeFaceY(85 - 10);
+      qt.orangeFaceX(50 - 82); qt.orangeFaceY(85 - 60);
       qt.yellowFaceX(20 - 52); qt.yellowFaceY(35 - 40);
       qt.mouthX(10 - 40); qt.mouthY(0);
     }
@@ -155,7 +155,7 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
       qt.purpleX(0); qt.blackX(0); qt.purpleHeight(400);
       qt.purpleFaceLeft(24); qt.purpleFaceTop(22);
       qt.blackFaceLeft(14); qt.blackFaceTop(20);
-      qt.orangeFaceX(22 - 82); qt.orangeFaceY(72 - 10);
+      qt.orangeFaceX(22 - 82); qt.orangeFaceY(72 - 60);
       qt.yellowFaceX(12 - 52); qt.yellowFaceY(22 - 40);
       qt.mouthX(-14); qt.mouthY(-8);
     }
