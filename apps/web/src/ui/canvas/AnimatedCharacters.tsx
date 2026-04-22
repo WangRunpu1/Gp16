@@ -1,3 +1,5 @@
+// Inspired by liuqingsong1528/Peek-Free-Login (https://github.com/liuqingsong1528/Peek-Free-Login)
+// Ported from Vue Composition API to React + GSAP, themed for GP16 PV system design.
 import gsap from 'gsap';
 import { useCallback, useEffect, useRef } from 'react';
 import './AnimatedCharacters.css';
@@ -9,12 +11,12 @@ interface Props {
   isPasswordGuardMode: boolean;
 }
 
-// Purple: tall building with blue glass curtain wall
+// Purple: tall building with blue glass windows, antenna, and rooftop details
 const purpleStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: '70px', width: '180px', height: '400px',
-  backgroundColor: '#1a3a5c', borderRadius: '4px 4px 0 0', zIndex: 1,
+  backgroundColor: '#1a3a5c', borderRadius: '2px 2px 0 0', zIndex: 1,
   transformOrigin: 'bottom center', willChange: 'transform',
-  overflow: 'hidden',
+  overflow: 'visible',
 };
 // Black: battery/energy storage (rounded rectangle with terminals)
 const blackStyle: React.CSSProperties = {
@@ -22,10 +24,10 @@ const blackStyle: React.CSSProperties = {
   backgroundColor: '#2D2D2D', borderRadius: '16px 16px 8px 8px', zIndex: 2,
   transformOrigin: 'bottom center', willChange: 'transform',
 };
-// Orange: inverter/charger (boxy with heat sink lines)
+// Orange: solar panel array (wide flat body with tilted panels and mounting stand)
 const orangeStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: 0, width: '240px', height: '200px',
-  backgroundColor: '#FF9B6B', borderRadius: '8px 8px 0 0', zIndex: 3,
+  backgroundColor: 'transparent', zIndex: 3,
   transformOrigin: 'bottom center', willChange: 'transform',
 };
 // Yellow: solar panel character (round head + panel body)
@@ -36,7 +38,7 @@ const yellowStyle: React.CSSProperties = {
 };
 const purpleFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '45px', top: '40px' };
 const blackFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '26px', top: '32px' };
-const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '90px' };
+const orangeFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '32px', left: '82px', top: '10px' };
 const yellowFaceStyle: React.CSSProperties = { position: 'absolute', display: 'flex', gap: '24px', left: '52px', top: '40px' };
 const yellowMouthStyle: React.CSSProperties = {
   position: 'absolute', width: '80px', height: '4px', backgroundColor: '#2D2D2D',
@@ -128,7 +130,7 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
       qt.purpleX(0); qt.blackX(0); qt.purpleHeight(400);
       qt.purpleFaceLeft(20); qt.purpleFaceTop(35);
       qt.blackFaceLeft(10); qt.blackFaceTop(28);
-      qt.orangeFaceX(50 - 82); qt.orangeFaceY(85 - 90);
+      qt.orangeFaceX(50 - 82); qt.orangeFaceY(85 - 10);
       qt.yellowFaceX(20 - 52); qt.yellowFaceY(35 - 40);
       qt.mouthX(10 - 40); qt.mouthY(0);
     }
@@ -153,7 +155,7 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
       qt.purpleX(0); qt.blackX(0); qt.purpleHeight(400);
       qt.purpleFaceLeft(24); qt.purpleFaceTop(22);
       qt.blackFaceLeft(14); qt.blackFaceTop(20);
-      qt.orangeFaceX(22 - 82); qt.orangeFaceY(72 - 90);
+      qt.orangeFaceX(22 - 82); qt.orangeFaceY(72 - 10);
       qt.yellowFaceX(12 - 52); qt.yellowFaceY(22 - 40);
       qt.mouthX(-14); qt.mouthY(-8);
     }
@@ -367,17 +369,50 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '550px', height: '400px' }}>
-      {/* Purple: tall building with blue glass windows */}
+      {/* Purple: tall building with antenna, blue glass windows, rooftop, entrance */}
       <div ref={purpleRef} style={purpleStyle}>
-        {/* Glass window rows */}
-        <div style={{ position: 'absolute', top: 100, left: 15, right: 15, display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} style={{
-              height: 14, background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%)',
-              borderRadius: 3, opacity: 0.7,
-            }} />
-          ))}
+        {/* Antenna / lightning rod on top */}
+        <div style={{
+          position: 'absolute', top: -40, left: '50%', transform: 'translateX(-50%)',
+          width: 4, height: 40, backgroundColor: '#888', borderRadius: 2,
+        }} />
+        <div style={{
+          position: 'absolute', top: -46, left: '50%', transform: 'translateX(-50%)',
+          width: 10, height: 10, borderRadius: '50%',
+          background: 'radial-gradient(circle, #ff4444 0%, #cc0000 100%)',
+          boxShadow: '0 0 6px #ff4444',
+        }} />
+        {/* Rooftop structure */}
+        <div style={{
+          position: 'absolute', top: 0, left: 10, right: 10, height: 30,
+          backgroundColor: '#234b73', borderRadius: '2px 2px 0 0',
+        }} />
+        {/* Two columns of glass windows */}
+        <div style={{ position: 'absolute', top: 45, left: 12, right: 12, bottom: 60, display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{
+                flex: 1, background: 'linear-gradient(180deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%)',
+                borderRadius: 2, opacity: 0.65,
+              }} />
+            ))}
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{
+                flex: 1, background: 'linear-gradient(180deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%)',
+                borderRadius: 2, opacity: 0.65,
+              }} />
+            ))}
+          </div>
         </div>
+        {/* Ground floor entrance */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: 40, height: 50, backgroundColor: '#2d5a8a',
+          borderRadius: '4px 4px 0 0',
+          borderLeft: '2px solid #3b82f6', borderRight: '2px solid #3b82f6', borderTop: '2px solid #3b82f6',
+        }} />
         <div ref={purpleFaceRef} style={purpleFaceStyle}>
           <div className="eyeball" data-max-distance="5" style={smallEyeStyle}>
             <div className="eyeball-pupil" style={smallPupilStyle} />
@@ -426,26 +461,45 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
         </div>
       </div>
 
-      {/* Orange: inverter/charger with heat sink lines */}
+      {/* Orange: solar panel array with tilted panels and mounting stand */}
       <div ref={orangeRef} style={orangeStyle}>
-        {/* Heat sink fins */}
+        {/* Mounting pole */}
         <div style={{
-          position: 'absolute', top: 12, left: 12, right: 12, bottom: 50,
-          display: 'flex', flexDirection: 'column', gap: 10,
-        }}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} style={{
-              height: 3, backgroundColor: 'rgba(0,0,0,0.12)', borderRadius: 2,
-            }} />
-          ))}
-        </div>
-        {/* Power indicator LED */}
-        <div style={{
-          position: 'absolute', bottom: 20, left: 20,
-          width: 8, height: 8, borderRadius: '50%',
-          background: '#22c55e', boxShadow: '0 0 6px #22c55e',
+          position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: 8, height: 60, backgroundColor: '#888', borderRadius: 2,
         }} />
-        <div ref={orangeFaceRef} style={orangeFaceStyle}>
+        {/* Base plate */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+          width: 60, height: 6, backgroundColor: '#666', borderRadius: 3,
+        }} />
+        {/* Tilted solar panel */}
+        <div style={{
+          position: 'absolute', bottom: 55, left: 10, right: 10, height: 110,
+          backgroundColor: '#FF9B6B', borderRadius: 8,
+          border: '2px solid #e88a5a',
+          transform: 'perspective(300px) rotateX(8deg)',
+          transformOrigin: 'bottom center',
+          overflow: 'hidden',
+        }}>
+          {/* Panel grid lines */}
+          <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 2, padding: 4 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{
+                background: 'linear-gradient(135deg, rgba(30,64,175,0.35) 0%, rgba(59,130,246,0.25) 100%)',
+                borderRadius: 1, border: '1px solid rgba(59,130,246,0.15)',
+              }} />
+            ))}
+          </div>
+          {/* Reflection highlight */}
+          <div style={{
+            position: 'absolute', top: -20, right: -20, width: 80, height: 80,
+            background: 'rgba(255,255,255,0.12)', borderRadius: '50%',
+            transform: 'rotate(45deg)',
+          }} />
+        </div>
+        {/* Face sits on top of the panel */}
+        <div ref={orangeFaceRef} style={{ ...orangeFaceStyle, top: 10 }}>
           <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
           <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
         </div>
