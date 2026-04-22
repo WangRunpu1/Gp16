@@ -9,21 +9,26 @@ interface Props {
   isPasswordGuardMode: boolean;
 }
 
+// Purple: tall building with blue glass curtain wall
 const purpleStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: '70px', width: '180px', height: '400px',
-  backgroundColor: '#6C3FF5', borderRadius: '10px 10px 0 0', zIndex: 1,
+  backgroundColor: '#1a3a5c', borderRadius: '4px 4px 0 0', zIndex: 1,
   transformOrigin: 'bottom center', willChange: 'transform',
+  overflow: 'hidden',
 };
+// Black: battery/energy storage (rounded rectangle with terminals)
 const blackStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: '240px', width: '120px', height: '310px',
-  backgroundColor: '#2D2D2D', borderRadius: '8px 8px 0 0', zIndex: 2,
+  backgroundColor: '#2D2D2D', borderRadius: '16px 16px 8px 8px', zIndex: 2,
   transformOrigin: 'bottom center', willChange: 'transform',
 };
+// Orange: inverter/charger (boxy with heat sink lines)
 const orangeStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: 0, width: '240px', height: '200px',
-  backgroundColor: '#FF9B6B', borderRadius: '120px 120px 0 0', zIndex: 3,
+  backgroundColor: '#FF9B6B', borderRadius: '8px 8px 0 0', zIndex: 3,
   transformOrigin: 'bottom center', willChange: 'transform',
 };
+// Yellow: solar panel character (round head + panel body)
 const yellowStyle: React.CSSProperties = {
   position: 'absolute', bottom: 0, left: '310px', width: '140px', height: '230px',
   backgroundColor: '#E8D754', borderRadius: '70px 70px 0 0', zIndex: 4,
@@ -362,7 +367,17 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '550px', height: '400px' }}>
+      {/* Purple: tall building with blue glass windows */}
       <div ref={purpleRef} style={purpleStyle}>
+        {/* Glass window rows */}
+        <div style={{ position: 'absolute', top: 100, left: 15, right: 15, display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} style={{
+              height: 14, background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #3b82f6 100%)',
+              borderRadius: 3, opacity: 0.7,
+            }} />
+          ))}
+        </div>
         <div ref={purpleFaceRef} style={purpleFaceStyle}>
           <div className="eyeball" data-max-distance="5" style={smallEyeStyle}>
             <div className="eyeball-pupil" style={smallPupilStyle} />
@@ -372,7 +387,35 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
           </div>
         </div>
       </div>
+
+      {/* Black: battery/energy storage with terminals and charge bars */}
       <div ref={blackRef} style={blackStyle}>
+        {/* Top terminal */}
+        <div style={{
+          position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+          width: 36, height: 12, backgroundColor: '#555', borderRadius: '4px 4px 0 0',
+        }} />
+        {/* Plus/minus indicators */}
+        <div style={{
+          position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
+          fontSize: 22, fontWeight: 800, color: '#ef4444', lineHeight: 1,
+        }}>+</div>
+        <div style={{
+          position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)',
+          fontSize: 22, fontWeight: 800, color: '#64748b', lineHeight: 1,
+        }}>−</div>
+        {/* Charge level bars */}
+        <div style={{
+          position: 'absolute', bottom: 70, left: 20, right: 20,
+          display: 'flex', flexDirection: 'column', gap: 4,
+        }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={{
+              height: 8, borderRadius: 4,
+              background: i < 2 ? '#52c41a' : '#444',
+            }} />
+          ))}
+        </div>
         <div ref={blackFaceRef} style={blackFaceStyle}>
           <div className="eyeball" data-max-distance="4" style={blackEyeStyle}>
             <div className="eyeball-pupil" style={blackPupilStyle} />
@@ -382,13 +425,48 @@ export function AnimatedCharacters({ isTyping, showPassword, passwordLength, isP
           </div>
         </div>
       </div>
+
+      {/* Orange: inverter/charger with heat sink lines */}
       <div ref={orangeRef} style={orangeStyle}>
+        {/* Heat sink fins */}
+        <div style={{
+          position: 'absolute', top: 12, left: 12, right: 12, bottom: 50,
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={{
+              height: 3, backgroundColor: 'rgba(0,0,0,0.12)', borderRadius: 2,
+            }} />
+          ))}
+        </div>
+        {/* Power indicator LED */}
+        <div style={{
+          position: 'absolute', bottom: 20, left: 20,
+          width: 8, height: 8, borderRadius: '50%',
+          background: '#22c55e', boxShadow: '0 0 6px #22c55e',
+        }} />
         <div ref={orangeFaceRef} style={orangeFaceStyle}>
           <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
           <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
         </div>
       </div>
+
+      {/* Yellow: solar panel character - round head with panel body below */}
       <div ref={yellowRef} style={yellowStyle}>
+        {/* Solar panel grid below the round head */}
+        <div style={{
+          position: 'absolute', top: 110, left: 10, right: 10, bottom: 10,
+          backgroundColor: '#1e40af', borderRadius: 6,
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1fr 1fr 1fr',
+          gap: 2, padding: 4,
+        }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div key={i} style={{
+              background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+              borderRadius: 2, border: '1px solid rgba(255,255,255,0.15)',
+            }} />
+          ))}
+        </div>
         <div ref={yellowFaceRef} style={yellowFaceStyle}>
           <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
           <div className="pupil" data-max-distance="5" style={dotPupilStyle} />
