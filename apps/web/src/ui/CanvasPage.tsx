@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import { AIChatPanel } from './canvas/AIChatPanel';
 import { BottomToolbar } from './canvas/BottomToolbar';
@@ -7,8 +8,11 @@ import { TopologyManager } from './canvas/TopologyManager';
 import { ReportButton } from './canvas/ReportButton';
 import { NodeEditDrawer } from './canvas/NodeEditDrawer';
 import { Space } from 'antd';
+import type { AgentMode } from '@gp16/shared';
 
 export function CanvasPage() {
+  const [agentMode, setAgentMode] = useState<AgentMode>('plan');
+
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden', background: '#f1f5f9' }}>
 
@@ -20,7 +24,7 @@ export function CanvasPage() {
         background: '#fff',
         boxShadow: '2px 0 8px rgba(0,0,0,0.03)',
       }}>
-        <AIChatPanel />
+        <AIChatPanel agentMode={agentMode} onModeChange={setAgentMode} />
       </div>
 
       {/* Center: Canvas + Bottom Toolbar */}

@@ -11,6 +11,7 @@ import queuePlugin from './plugins/queue.js';
 import authRoutes from './routes/auth.js';
 import analysisRoutes from './routes/analysis.js';
 import aiRoutes from './routes/ai.js';
+import agentRoutes from './routes/agent.js';
 import reportRoutes from './routes/reports.js';
 import topologyRoutes from './routes/topologies.js';
 
@@ -47,6 +48,7 @@ await app.register(staticFiles, { root: webDist, prefix: '/' });
 await app.register(authRoutes);
 await app.register(analysisRoutes);
 await app.register(aiRoutes);
+await app.register(agentRoutes);
 await app.register(reportRoutes);
 await app.register(topologyRoutes);
 

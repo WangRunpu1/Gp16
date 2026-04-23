@@ -87,3 +87,35 @@ export interface SavedTopology {
   createdAt: string;
   updatedAt: string;
 }
+
+// ── Agent types ───────────────────────────────────────────────────────────────
+
+export type AgentMode = 'plan' | 'agent';
+
+export type AgentReactionType =
+  | 'thinking'
+  | 'planning'
+  | 'tool_call'
+  | 'tool_result'
+  | 'response'
+  | 'error'
+  | 'question';
+
+export interface AgentMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  reactionType?: AgentReactionType;
+  toolName?: string;
+  toolInput?: unknown;
+  toolSuccess?: boolean;
+  timestamp: number;
+}
+
+export interface AgentConversation {
+  id: string;
+  mode: AgentMode;
+  messages: AgentMessage[];
+  topologySnapshot?: Topology;
+  createdAt: number;
+}

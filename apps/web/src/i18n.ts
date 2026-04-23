@@ -171,6 +171,18 @@ const zh = {
     scenarioC3Prompt: '200kW 光伏 + 400kWh 储能 + 2台 60kW 直流充电桩，工业园区微网',
     scenarioC4Label: '离网系统',
     scenarioC4Prompt: '30kW 光伏 + 60kWh 储能，离网独立供电，农村电气化项目',
+    // Agent mode
+    agentMode: 'Agent 模式',
+    planMode: '规划模式',
+    modeSwitchTip: '切换为规划模式：AI 会分析并给出建议，不会修改画布',
+    agentThinking: 'AI 正在思考...',
+    agentPlanning: '正在制定计划...',
+    agentExecuting: '正在执行...',
+    agentApplied: '已应用到画布',
+    agentQuestion: '请确认',
+    agentError: '执行出错',
+    confirmAction: '确认执行',
+    agentWelcome: '你好！我是光伏系统设计 Agent。\n\n**规划模式**：我会分析你的需求，给出设计建议。\n**Agent 模式**：我会自动生成并应用布局到画布。\n\n请告诉我你的需求，或切换模式开始。',
   },
 };
 
@@ -344,6 +356,18 @@ const en = {
     scenarioC3Prompt: '200kW PV + 400kWh storage + 2x 60kW DC fast chargers, industrial campus microgrid',
     scenarioC4Label: 'Off-Grid',
     scenarioC4Prompt: '30kW PV + 60kWh storage, off-grid standalone power, rural electrification project',
+    // Agent mode
+    agentMode: 'Agent Mode',
+    planMode: 'Plan Mode',
+    modeSwitchTip: 'Switch to Plan mode: AI will analyze and suggest, without modifying canvas',
+    agentThinking: 'AI is thinking...',
+    agentPlanning: 'Creating plan...',
+    agentExecuting: 'Executing...',
+    agentApplied: 'Applied to canvas',
+    agentQuestion: 'Please confirm',
+    agentError: 'Execution error',
+    confirmAction: 'Confirm',
+    agentWelcome: 'Hello! I am your PV System Design Agent.\n\n**Plan Mode**: I will analyze your needs and suggest designs.\n**Agent Mode**: I will auto-generate and apply layouts.\n\nTell me what you need, or switch modes below.',
   },
 };
 
