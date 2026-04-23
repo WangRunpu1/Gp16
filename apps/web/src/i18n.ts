@@ -102,7 +102,7 @@ const zh = {
     invTypeMicro: '微型',
     // battery chemistry
     chemLead: '铅酸',
-    // charger connector
+    // charger connectors
     connAC: 'AC慢充',
     connDC: 'DC快充',
     connBoth: 'AC/DC双枪',
@@ -183,6 +183,31 @@ const zh = {
     agentError: '执行出错',
     confirmAction: '确认执行',
     agentWelcome: '你好！我是光伏系统设计 Agent。\n\n**规划模式**：我会分析你的需求，给出设计建议。\n**Agent 模式**：我会自动生成并应用布局到画布。\n\n请告诉我你的需求，或切换模式开始。',
+    // Toolbar: Quick actions
+    undo: '撤销',
+    redo: '重做',
+    autoLayout: '自动布局',
+    gridSnap: '网格对齐',
+    clearCanvas: '清空',
+    confirmClear: '确认清空画布？此操作可撤销。',
+    canvasCleared: '画布已清空',
+    // Toolbar: Templates
+    templateGridTied: '并网光伏',
+    templatePVStorage: '光储系统',
+    templatePVStorageCharger: '光储充',
+    templateOffGrid: '离网系统',
+    templateApplied: '已应用模板：{{name}}',
+    // Toolbar: Validation
+    validate: '验证',
+    validatePass: '验证通过',
+    validateFail: '验证失败',
+    validateErrors: '{{count}} 个错误',
+    // Toolbar: Status
+    nodeCount: '节点',
+    edgeCount: '连线',
+    totalCapacity: '总装机',
+    batteryCapacity: '储能',
+    connectRate: '连接率',
   },
 };
 
@@ -287,7 +312,7 @@ const en = {
     invTypeMicro: 'Micro',
     // battery chemistry
     chemLead: 'Lead-Acid',
-    // charger connector
+    // charger connectors
     connAC: 'AC Slow',
     connDC: 'DC Fast',
     connBoth: 'AC/DC Dual',
@@ -368,6 +393,31 @@ const en = {
     agentError: 'Execution error',
     confirmAction: 'Confirm',
     agentWelcome: 'Hello! I am your PV System Design Agent.\n\n**Plan Mode**: I will analyze your needs and suggest designs.\n**Agent Mode**: I will auto-generate and apply layouts.\n\nTell me what you need, or switch modes below.',
+    // Toolbar: Quick actions
+    undo: 'Undo',
+    redo: 'Redo',
+    autoLayout: 'Auto Layout',
+    gridSnap: 'Snap Grid',
+    clearCanvas: 'Clear',
+    confirmClear: 'Clear the entire canvas? This can be undone.',
+    canvasCleared: 'Canvas cleared',
+    // Toolbar: Templates
+    templateGridTied: 'Grid-tied PV',
+    templatePVStorage: 'PV + Storage',
+    templatePVStorageCharger: 'PV + Storage + EV',
+    templateOffGrid: 'Off-grid',
+    templateApplied: 'Applied template: {{name}}',
+    // Toolbar: Validation
+    validate: 'Validate',
+    validatePass: 'Validation Passed',
+    validateFail: 'Validation Failed',
+    validateErrors: '{{count}} errors',
+    // Toolbar: Status
+    nodeCount: 'Nodes',
+    edgeCount: 'Edges',
+    totalCapacity: 'Capacity',
+    batteryCapacity: 'Battery',
+    connectRate: 'Connected',
   },
 };
 
