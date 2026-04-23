@@ -5,9 +5,8 @@ import {
   RobotOutlined,
   UserOutlined,
   BulbOutlined,
-  SettingOutlined,
 } from '@ant-design/icons';
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
 import { postJson, apiFetch } from '@/api/client';
@@ -21,6 +20,7 @@ interface ChatMessage {
   reactionType?: AgentMessage['reactionType'];
   toolName?: string;
   toolSuccess?: boolean;
+  id?: string;
 }
 
 interface Props {
@@ -65,7 +65,6 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: agentMode });
       setConvId(res.id);
     } catch {
-      // Fallback: use a local ID
       setConvId('local-' + Date.now());
     }
   }
@@ -82,7 +81,6 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     setLoading(true);
 
     try {
-      // If no conversation exists, create one on the fly
       let cid = convId;
       if (!cid) {
         const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: agentMode });
@@ -97,14 +95,13 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
         { content: text, topology },
       );
 
-      // Apply layout if agent mode returned one
       if (agentMode === 'agent' && res.layout) {
         setNodes(res.layout.topology.nodes);
         setEdges(res.layout.topology.edges);
       }
 
-      // Render messages with different reaction types
       const newMsgs: ChatMessage[] = (res.messages ?? []).map((m) => ({
+        id: m.id,
         role: m.role,
         content: m.content,
         reactionType: m.reactionType,
@@ -115,7 +112,6 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       setMessages((prev) => [...prev.slice(0, -1), ...newMsgs]);
       scrollToBottom();
     } catch (e: any) {
-      // Fallback: use legacy AI flow if agent endpoint is not available
       try {
         const { taskId } = await postJson<{ taskId: string }>('/api/ai/layout', { prompt: text });
         for (let i = 0; i < 60; i++) {
@@ -148,6 +144,108 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
         ]);
         scrollToBottom();
       }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle confirm action from question message
+  async function handleConfirm(customReply?: string) {
+    const reply = customReply || t('confirmExecute');
+    const lastQuestion = [...messages].reverse().find(m => m.reactionType === 'question');
+    if (!lastQuestion) return;
+
+    // Add user response as a message
+    const userMsg: ChatMessage = { role: 'user', content: reply };
+    const executingMsg: ChatMessage = { role: 'assistant', content: t('switchingToAgent'), loading: true, reactionType: 'thinking' };
+    setMessages((prev) => [...prev, userMsg, executingMsg]);
+    scrollToBottom();
+    setLoading(true);
+
+    // Switch to agent mode
+    onModeChange?.('agent');
+
+    // Wait a tick for mode change to take effect, then send to agent endpoint
+    await new Promise(r => setTimeout(r, 100));
+
+    try {
+      let cid = convId;
+      if (!cid) {
+        const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: 'agent' });
+        cid = res.id;
+        setConvId(cid);
+      }
+
+      const topology = { nodes, edges };
+
+      const res = await postJson<{ messages: AgentMessage[]; layout?: AILayoutResult }>(
+        `/api/agent/${cid}/message`,
+        { content: reply, topology },
+      );
+
+      if (res.layout) {
+        setNodes(res.layout.topology.nodes);
+        setEdges(res.layout.topology.edges);
+      }
+
+      const newMsgs: ChatMessage[] = (res.messages ?? []).map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        reactionType: m.reactionType,
+        toolName: m.toolName,
+        toolSuccess: m.toolSuccess,
+      }));
+
+      setMessages((prev) => [...prev.slice(0, -1), ...newMsgs]);
+      scrollToBottom();
+    } catch (e: any) {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: 'assistant', content: t('aiFailMsg', { err: e?.message ?? e }) },
+      ]);
+      scrollToBottom();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Handle reject action from question message
+  async function handleReject() {
+    const reply = t('rejectAction');
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: reply },
+    ]);
+    scrollToBottom();
+    setLoading(true);
+
+    try {
+      let cid = convId;
+      if (!cid) return;
+
+      const res = await postJson<{ messages: AgentMessage[] }>(
+        `/api/agent/${cid}/message`,
+        { content: reply },
+      );
+
+      const newMsgs: ChatMessage[] = (res.messages ?? []).map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        reactionType: m.reactionType,
+        toolName: m.toolName,
+        toolSuccess: m.toolSuccess,
+      }));
+
+      setMessages((prev) => [...prev.slice(0, -1), ...newMsgs]);
+      scrollToBottom();
+    } catch {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: 'assistant', content: t('rejectAction'), reactionType: 'response' },
+      ]);
+      scrollToBottom();
     } finally {
       setLoading(false);
     }
@@ -195,7 +293,6 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {/* Mode toggle */}
           <div style={{
             display: 'flex', background: 'rgba(255,255,255,0.08)', borderRadius: 8,
             padding: 2, border: '1px solid rgba(255,255,255,0.1)',
@@ -270,7 +367,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 14, background: '#fafbfc' }}>
         {messages.map((msg, i) => (
-          <div key={i} style={{
+          <div key={msg.id ?? i} style={{
             display: 'flex',
             flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
             alignItems: 'flex-start', gap: 8,
@@ -297,7 +394,8 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
                 : msg.reactionType === 'thinking' ? '#fffbeb'
                   : msg.reactionType === 'tool_call' ? '#f0f9ff'
                     : msg.reactionType === 'tool_result' ? (msg.toolSuccess ? '#f0fdf4' : '#fef2f2')
-                      : '#fff',
+                      : msg.reactionType === 'question' ? '#faf5ff'
+                        : '#fff',
               border: msg.role === 'assistant' && msg.reactionType ? 'none' : '1px solid #e2e8f0',
               boxShadow: msg.role === 'user'
                 ? '0 2px 8px rgba(37,99,235,0.25)'
@@ -307,7 +405,8 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
                 : msg.reactionType === 'thinking' ? '#92400e'
                   : msg.reactionType === 'tool_call' ? '#0369a1'
                     : msg.reactionType === 'tool_result' ? (msg.toolSuccess ? '#166534' : '#991b1b')
-                      : '#334155',
+                      : msg.reactionType === 'question' ? '#5b21b6'
+                        : '#334155',
             }}>
               {msg.loading ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -317,7 +416,12 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
                   </span>
                 </div>
               ) : msg.reactionType ? (
-                <AgentMessageRenderer msg={msg as any} isLast={i === messages.length - 1} />
+                <AgentMessageRenderer
+                  msg={msg as any}
+                  isLast={i === messages.length - 1}
+                  onConfirm={handleConfirm}
+                  onReject={handleReject}
+                />
               ) : (
                 <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>
               )}

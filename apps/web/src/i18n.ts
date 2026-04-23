@@ -208,6 +208,11 @@ const zh = {
     totalCapacity: '总装机',
     batteryCapacity: '储能',
     connectRate: '连接率',
+    // Agent question actions
+    confirmExecute: '确认执行',
+    rejectAction: '不需要',
+    addInfo: '补充信息',
+    switchingToAgent: '正在切换到 Agent 模式...',
   },
 };
 
@@ -418,6 +423,11 @@ const en = {
     totalCapacity: 'Capacity',
     batteryCapacity: 'Battery',
     connectRate: 'Connected',
+    // Agent question actions
+    confirmExecute: 'Confirm & Execute',
+    rejectAction: 'Not needed',
+    addInfo: 'Add info',
+    switchingToAgent: 'Switching to Agent mode...',
   },
 };
 

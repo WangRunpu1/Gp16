@@ -1,4 +1,4 @@
-import { Tag, Typography } from 'antd';
+import { Button, Input, Tag, Typography } from 'antd';
 import {
   ThunderboltOutlined,
   CheckCircleOutlined,
@@ -7,7 +7,12 @@ import {
   BulbOutlined,
   ToolOutlined,
   FileTextOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  PlusOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AgentMessage } from '@gp16/shared';
 
@@ -16,10 +21,14 @@ const { Text } = Typography;
 interface Props {
   msg: AgentMessage;
   isLast: boolean;
+  onConfirm?: () => void;
+  onReject?: () => void;
 }
 
-export function AgentMessageRenderer({ msg, isLast }: Props) {
+export function AgentMessageRenderer({ msg, isLast, onConfirm, onReject }: Props) {
   const { t } = useTranslation();
+  const [showInput, setShowInput] = useState(false);
+  const [inputValue, setInputValue] = useState('');
 
   if (msg.role === 'user') {
     return <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>;
@@ -97,16 +106,87 @@ export function AgentMessageRenderer({ msg, isLast }: Props) {
 
     case 'question':
       return (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-          <QuestionCircleOutlined style={{ fontSize: 12, color: '#8b5cf6', marginTop: 2, flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11.5, color: '#5b21b6', whiteSpace: 'pre-wrap', display: 'block', marginBottom: 6 }}>
-              {msg.content}
-            </Text>
-            <Text style={{ fontSize: 10, color: '#a78bfa', fontWeight: 500 }}>
-              {t('agentQuestion')}
-            </Text>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+            <QuestionCircleOutlined style={{ fontSize: 12, color: '#8b5cf6', marginTop: 2, flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11.5, color: '#5b21b6', whiteSpace: 'pre-wrap', display: 'block', marginBottom: 4 }}>
+                {msg.content}
+              </Text>
+              <Text style={{ fontSize: 10, color: '#a78bfa', fontWeight: 500 }}>
+                {t('agentQuestion')}
+              </Text>
+            </div>
           </div>
+          {isLast && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                size="small"
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={onConfirm}
+                style={{
+                  fontSize: 10.5, borderRadius: 8, fontWeight: 600, height: 28,
+                  background: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
+                  border: 'none', boxShadow: '0 1px 4px rgba(139,92,246,0.3)',
+                }}
+              >
+                {t('confirmExecute')}
+              </Button>
+              <Button
+                size="small"
+                danger
+                icon={<CloseOutlined />}
+                onClick={onReject}
+                style={{ fontSize: 10.5, borderRadius: 8, fontWeight: 500, height: 28 }}
+              >
+                {t('rejectAction')}
+              </Button>
+              <Button
+                size="small"
+                type="text"
+                icon={<PlusOutlined />}
+                onClick={() => setShowInput(!showInput)}
+                style={{ fontSize: 10.5, color: '#a78bfa', fontWeight: 500 }}
+              >
+                {t('addInfo')}
+              </Button>
+            </div>
+          )}
+          {showInput && (
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <Input
+                size="small"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onPressEnter={() => {
+                  const text = inputValue.trim();
+                  if (text && onConfirm) {
+                    onConfirm(text);
+                    setInputValue('');
+                    setShowInput(false);
+                  }
+                }}
+                placeholder={t('addInfo')}
+                style={{ fontSize: 10.5, borderRadius: 8 }}
+                autoFocus
+              />
+              <Button
+                size="small"
+                type="primary"
+                icon={<SendOutlined />}
+                onClick={() => {
+                  const text = inputValue.trim();
+                  if (text && onConfirm) {
+                    onConfirm(text);
+                    setInputValue('');
+                    setShowInput(false);
+                  }
+                }}
+                style={{ height: 24, borderRadius: 6, fontSize: 10 }}
+              />
+            </div>
+          )}
         </div>
       );
 
