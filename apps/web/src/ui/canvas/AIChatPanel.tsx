@@ -6,7 +6,7 @@ import {
   UserOutlined,
   BulbOutlined,
 } from '@ant-design/icons';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
 import { postJson, apiFetch } from '@/api/client';
@@ -30,6 +30,7 @@ interface Props {
 
 export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
   const { t } = useTranslation();
+  const inputRef = useRef<any>(null);
 
   const QUICK_SCENARIOS = [
     { labelKey: 'scenarioC1Label', promptKey: 'scenarioC1Prompt' },
@@ -44,12 +45,28 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [convId, setConvId] = useState<string | null>(null);
+  // Use a ref to always have the latest convId for sendMessage
+  const convIdRef = useRef<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const setNodes = useTopologyStore((s) => s.setNodes);
   const setEdges = useTopologyStore((s) => s.setEdges);
   const nodes = useTopologyStore((s) => s.nodes);
   const edges = useTopologyStore((s) => s.edges);
   const reset = useTopologyStore((s) => s.reset);
+
+  useEffect(() => { convIdRef.current = convId; }, [convId]);
+
+  // Track if AI is awaiting user answer to a question
+  const awaitingAnswer = messages.length > 0
+    && messages[messages.length - 1].reactionType === 'question'
+    && !loading;
+
+  // Auto-focus input when AI is awaiting an answer
+  useEffect(() => {
+    if (awaitingAnswer) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [awaitingAnswer]);
 
   function scrollToBottom() {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -69,7 +86,8 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     }
   }
 
-  async function sendMessage(prompt?: string) {
+  // sendMessage uses refs for latest state to avoid stale closures in callbacks
+  const sendMessage = useCallback(async (prompt?: string) => {
     const text = (prompt ?? input).trim();
     if (!text || loading) return;
     setInput('');
@@ -81,11 +99,12 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     setLoading(true);
 
     try {
-      let cid = convId;
+      let cid = convIdRef.current;
       if (!cid) {
         const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: agentMode });
         cid = res.id;
         setConvId(cid);
+        convIdRef.current = cid;
       }
 
       const topology = agentMode === 'agent' ? { nodes, edges } : undefined;
@@ -95,6 +114,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
         { content: text, topology },
       );
 
+      // Apply layout if agent mode returned one
       if (agentMode === 'agent' && res.layout) {
         setNodes(res.layout.topology.nodes);
         setEdges(res.layout.topology.edges);
@@ -147,109 +167,19 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, agentMode, nodes, edges, input, t]);
 
-  // Handle confirm action from question message
-  async function handleConfirm(customReply?: string) {
-    const reply = customReply || t('confirmExecute');
-    const lastQuestion = [...messages].reverse().find(m => m.reactionType === 'question');
-    if (!lastQuestion) return;
+  // Confirm action from question message — just send as user reply, don't switch mode
+  const handleConfirm = useCallback((customReply?: string) => {
+    const reply = customReply?.trim() || t('confirmExecute');
+    sendMessage(reply);
+  }, [t, sendMessage]);
 
-    // Add user response as a message
-    const userMsg: ChatMessage = { role: 'user', content: reply };
-    const executingMsg: ChatMessage = { role: 'assistant', content: t('switchingToAgent'), loading: true, reactionType: 'thinking' };
-    setMessages((prev) => [...prev, userMsg, executingMsg]);
-    scrollToBottom();
-    setLoading(true);
-
-    // Switch to agent mode
-    onModeChange?.('agent');
-
-    // Wait a tick for mode change to take effect, then send to agent endpoint
-    await new Promise(r => setTimeout(r, 100));
-
-    try {
-      let cid = convId;
-      if (!cid) {
-        const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: 'agent' });
-        cid = res.id;
-        setConvId(cid);
-      }
-
-      const topology = { nodes, edges };
-
-      const res = await postJson<{ messages: AgentMessage[]; layout?: AILayoutResult }>(
-        `/api/agent/${cid}/message`,
-        { content: reply, topology },
-      );
-
-      if (res.layout) {
-        setNodes(res.layout.topology.nodes);
-        setEdges(res.layout.topology.edges);
-      }
-
-      const newMsgs: ChatMessage[] = (res.messages ?? []).map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        reactionType: m.reactionType,
-        toolName: m.toolName,
-        toolSuccess: m.toolSuccess,
-      }));
-
-      setMessages((prev) => [...prev.slice(0, -1), ...newMsgs]);
-      scrollToBottom();
-    } catch (e: any) {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: 'assistant', content: t('aiFailMsg', { err: e?.message ?? e }) },
-      ]);
-      scrollToBottom();
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Handle reject action from question message
-  async function handleReject() {
-    const reply = t('rejectAction');
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', content: reply },
-    ]);
-    scrollToBottom();
-    setLoading(true);
-
-    try {
-      let cid = convId;
-      if (!cid) return;
-
-      const res = await postJson<{ messages: AgentMessage[] }>(
-        `/api/agent/${cid}/message`,
-        { content: reply },
-      );
-
-      const newMsgs: ChatMessage[] = (res.messages ?? []).map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        reactionType: m.reactionType,
-        toolName: m.toolName,
-        toolSuccess: m.toolSuccess,
-      }));
-
-      setMessages((prev) => [...prev.slice(0, -1), ...newMsgs]);
-      scrollToBottom();
-    } catch {
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: 'assistant', content: t('rejectAction'), reactionType: 'response' },
-      ]);
-      scrollToBottom();
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Reject action — send rejection as user message
+  const handleReject = useCallback(() => {
+    sendMessage(t('rejectAction'));
+  }, [t, sendMessage]);
 
   function handleClear() {
     reset();
@@ -431,11 +361,24 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div style={{ padding: '10px 12px 12px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
+      {/* Input — with question-aware placeholder and auto-focus */}
+      <div style={{
+        padding: '10px 12px 12px', borderTop: '1px solid #e2e8f0',
+        background: awaitingAnswer ? '#faf5ff' : '#fff',
+        transition: 'background 0.2s ease',
+      }}>
+        {awaitingAnswer && (
+          <div style={{
+            fontSize: 10.5, color: '#8b5cf6', fontWeight: 600, marginBottom: 6,
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            <BulbOutlined /> {t('agentQuestion')}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
           <Input.TextArea
-            placeholder={isAgent ? t('aiInputPlaceholder') : t('aiPrompt')}
+            ref={inputRef}
+            placeholder={awaitingAnswer ? t('agentAnswerTip') : isAgent ? t('aiInputPlaceholder') : t('aiPrompt')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPressEnter={(e) => { if (!e.shiftKey) { e.preventDefault(); sendMessage(); } }}
@@ -443,7 +386,8 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
             autoSize={{ minRows: 2, maxRows: 4 }}
             style={{
               fontSize: 12.5, resize: 'none', borderRadius: 10,
-              border: '1px solid #e2e8f0', boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+              border: awaitingAnswer ? '1.5px solid #8b5cf6' : '1px solid #e2e8f0',
+              boxShadow: awaitingAnswer ? '0 0 0 3px rgba(139,92,246,0.1)' : '0 1px 2px rgba(0,0,0,0.03)',
             }}
           />
           <Button
@@ -453,13 +397,17 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
             disabled={!input.trim()}
             style={{
               height: 38, borderRadius: 10, paddingInline: 14,
-              background: isAgent
+              background: awaitingAnswer
                 ? 'linear-gradient(135deg,#8b5cf6,#6366f1)'
-                : 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
+                : isAgent
+                  ? 'linear-gradient(135deg,#8b5cf6,#6366f1)'
+                  : 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
               border: 'none',
-              boxShadow: isAgent
+              boxShadow: awaitingAnswer
                 ? '0 2px 6px rgba(139,92,246,0.3)'
-                : '0 2px 6px rgba(14,165,233,0.3)',
+                : isAgent
+                  ? '0 2px 6px rgba(139,92,246,0.3)'
+                  : '0 2px 6px rgba(14,165,233,0.3)',
               fontSize: 13, fontWeight: 500, flexShrink: 0,
             }}
           />
