@@ -45,8 +45,9 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [convId, setConvId] = useState<string | null>(null);
-  // Use a ref to always have the latest convId for sendMessage
+  // Use refs to always have latest values in callbacks
   const convIdRef = useRef<string | null>(null);
+  const agentModeRef = useRef<AgentMode>(agentMode);
   const bottomRef = useRef<HTMLDivElement>(null);
   const setNodes = useTopologyStore((s) => s.setNodes);
   const setEdges = useTopologyStore((s) => s.setEdges);
@@ -55,6 +56,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
   const reset = useTopologyStore((s) => s.reset);
 
   useEffect(() => { convIdRef.current = convId; }, [convId]);
+  useEffect(() => { agentModeRef.current = agentMode; }, [agentMode]);
 
   // Track if AI is awaiting user answer to a question
   const awaitingAnswer = messages.length > 0
@@ -68,14 +70,11 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     }
   }, [awaitingAnswer]);
 
-  function scrollToBottom() {
-    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
-  }
-
-  // Create a new conversation when mode changes
+  // Create conversation on mount only — don't reset on mode change
   useEffect(() => {
     createConversation();
-  }, [agentMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function createConversation() {
     try {
@@ -86,7 +85,18 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     }
   }
 
-  // sendMessage uses refs for latest state to avoid stale closures in callbacks
+  // Collect the last user message content for re-send in agent mode
+  const lastUserContent = messages
+    .filter(m => m.role === 'user')
+    .slice(-1)[0]?.content ?? '';
+  const lastUserContentRef = useRef('');
+  useEffect(() => { lastUserContentRef.current = lastUserContent; }, [lastUserContent]);
+
+  function scrollToBottom() {
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+  }
+
+  // sendMessage uses refs for latest state to avoid stale closures
   const sendMessage = useCallback(async (prompt?: string) => {
     const text = (prompt ?? input).trim();
     if (!text || loading) return;
@@ -101,13 +111,13 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     try {
       let cid = convIdRef.current;
       if (!cid) {
-        const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: agentMode });
+        const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: agentModeRef.current });
         cid = res.id;
         setConvId(cid);
         convIdRef.current = cid;
       }
 
-      const topology = agentMode === 'agent' ? { nodes, edges } : undefined;
+      const topology = agentModeRef.current === 'agent' ? { nodes, edges } : undefined;
 
       const res = await postJson<{ messages: AgentMessage[]; layout?: AILayoutResult }>(
         `/api/agent/${cid}/message`,
@@ -115,7 +125,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       );
 
       // Apply layout if agent mode returned one
-      if (agentMode === 'agent' && res.layout) {
+      if (agentModeRef.current === 'agent' && res.layout) {
         setNodes(res.layout.topology.nodes);
         setEdges(res.layout.topology.edges);
       }
@@ -140,7 +150,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
             `/api/ai/layout/${taskId}`,
           );
           if (pollRes.state === 'completed' && pollRes.result) {
-            if (agentMode === 'agent') {
+            if (agentModeRef.current === 'agent') {
               setNodes(pollRes.result.topology.nodes);
               setEdges(pollRes.result.topology.edges);
             }
@@ -168,18 +178,84 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, agentMode, nodes, edges, input, t]);
+  }, [loading, nodes, edges, input, t]);
 
-  // Confirm action from question message — just send as user reply, don't switch mode
-  const handleConfirm = useCallback((customReply?: string) => {
-    const reply = customReply?.trim() || t('confirmExecute');
-    sendMessage(reply);
-  }, [t, sendMessage]);
+  // Auto-execute: switch to agent mode, create new conversation, re-send last user request
+  const handleAutoExecute = useCallback(async () => {
+    // 1. Switch to agent mode
+    onModeChange?.('agent');
 
-  // Reject action — send rejection as user message
-  const handleReject = useCallback(() => {
-    sendMessage(t('rejectAction'));
-  }, [t, sendMessage]);
+    // 2. Reset conversation ID so a new one is created in agent mode
+    setConvId(null);
+    convIdRef.current = null;
+
+    // 3. Wait a tick for mode change to propagate, then re-send
+    await new Promise(r => setTimeout(r, 200));
+
+    // Re-send the last user message content to trigger agent execution
+    const text = lastUserContentRef.current.trim();
+    if (!text) return;
+
+    setLoading(true);
+    try {
+      const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: 'agent' });
+      const cid = res.id;
+      setConvId(cid);
+      convIdRef.current = cid;
+
+      const topology = { nodes, edges };
+      const apiRes = await postJson<{ messages: AgentMessage[]; layout?: AILayoutResult }>(
+        `/api/agent/${cid}/message`,
+        { content: text, topology },
+      );
+
+      if (apiRes.layout) {
+        setNodes(apiRes.layout.topology.nodes);
+        setEdges(apiRes.layout.topology.edges);
+      }
+
+      const newMsgs: ChatMessage[] = (apiRes.messages ?? []).map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        reactionType: m.reactionType,
+        toolName: m.toolName,
+        toolSuccess: m.toolSuccess,
+      }));
+
+      setMessages((prev) => [...prev, { role: 'user', content: text }, ...newMsgs]);
+      scrollToBottom();
+    } catch (e: any) {
+      // Fallback: try the old layout API
+      try {
+        const { taskId } = await postJson<{ taskId: string }>('/api/ai/layout', { prompt: text });
+        for (let i = 0; i < 60; i++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          const pollRes = await apiFetch<{ state: string; result?: AILayoutResult; failedReason?: string }>(
+            `/api/ai/layout/${taskId}`,
+          );
+          if (pollRes.state === 'completed' && pollRes.result) {
+            setNodes(pollRes.result.topology.nodes);
+            setEdges(pollRes.result.topology.edges);
+            const nodeCount = pollRes.result.topology.nodes.length;
+            const edgeCount = pollRes.result.topology.edges.length;
+            const reply = t('aiSuccessMsg', { nodes: nodeCount, edges: edgeCount });
+            setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: reply }]);
+            scrollToBottom();
+            return;
+          }
+          if (pollRes.state === 'failed') throw new Error(pollRes.failedReason ?? 'failed');
+        }
+        throw new Error('timeout');
+      } catch (e2: any) {
+        setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: t('aiFailMsg', { err: e2?.message ?? e }) }]);
+        scrollToBottom();
+      }
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, t, onModeChange]);
 
   function handleClear() {
     reset();
@@ -349,8 +425,8 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
                 <AgentMessageRenderer
                   msg={msg as any}
                   isLast={i === messages.length - 1}
-                  onConfirm={handleConfirm}
-                  onReject={handleReject}
+                  onReply={sendMessage}
+                  onExecute={handleAutoExecute}
                 />
               ) : (
                 <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>

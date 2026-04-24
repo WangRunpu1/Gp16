@@ -209,10 +209,13 @@ const zh = {
     batteryCapacity: '储能',
     connectRate: '连接率',
     // Agent question actions
-    confirmExecute: '确认执行',
+    confirmExecute: '确认',
     rejectAction: '不需要',
     addInfo: '补充信息',
+    executeOnCanvas: '在画布上执行',
+    replyContinue: '回复继续',
     switchingToAgent: '正在切换到 Agent 模式...',
+    agentAnswerTip: '请回答 AI 的问题...',
   },
 };
 
@@ -424,10 +427,13 @@ const en = {
     batteryCapacity: 'Battery',
     connectRate: 'Connected',
     // Agent question actions
-    confirmExecute: 'Confirm & Execute',
+    confirmExecute: 'Confirm',
     rejectAction: 'Not needed',
     addInfo: 'Add info',
+    executeOnCanvas: 'Execute on Canvas',
+    replyContinue: 'Reply & Continue',
     switchingToAgent: 'Switching to Agent mode...',
+    agentAnswerTip: 'Please answer the AI\'s question...',
   },
 };
 

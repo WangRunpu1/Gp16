@@ -283,11 +283,36 @@ function isZh(text: string): boolean {
 
 function heuristicAgent(prompt: string, topology?: Topology): AgentMessage[] {
   const now = Date.now();
+  const info = extractInfo(prompt);
+  const zh = isZh(prompt);
+
+  // If input is extremely vague, ask a question instead of executing
+  if (prompt.length < 15 && info.pvKw === null && info.battKwh === null && !info.hasStorage && !info.hasCommercial && !info.hasResidential && !info.hasIndustrial) {
+    const q = generateFollowUp(info, 10, 20);
+    if (zh) {
+      return [
+        { id: randomUUID(), role: 'assistant', content: '分析需求中，需要更多信息才能生成布局', reactionType: 'thinking', timestamp: now },
+        { id: randomUUID(), role: 'assistant', content: q.zh, reactionType: 'question', timestamp: now + 1 },
+      ];
+    }
+    return [
+      { id: randomUUID(), role: 'assistant', content: 'Analyzing requirements — need more details to generate a layout', reactionType: 'thinking', timestamp: now },
+      { id: randomUUID(), role: 'assistant', content: q.en, reactionType: 'question', timestamp: now + 1 },
+    ];
+  }
+
+  // Otherwise, generate a proper layout
+  const pvKw = info.pvKw ?? 10;
+  const battKwh = info.battKwh ?? (info.hasStorage ? 20 : 0);
+  const zhThinking = zh
+    ? `分析需求：${pvKw}kW 光伏${battKwh > 0 ? ` + ${battKwh}kWh 储能` : ''}，正在生成布局`
+    : `Analyzing: ${pvKw}kW PV${battKwh > 0 ? ` + ${battKwh}kWh storage` : ''}, generating layout`;
+
   return [
-    { id: randomUUID(), role: 'assistant', content: 'Analyzing requirements and generating layout...', reactionType: 'thinking', timestamp: now },
-    { id: randomUUID(), role: 'assistant', content: 'Generating system topology', reactionType: 'tool_call', toolName: 'layout', toolInput: { prompt }, timestamp: now + 1 },
-    { id: randomUUID(), role: 'assistant', content: 'Topology generated: 5 nodes, 4 connections', reactionType: 'tool_result', toolName: 'layout', toolSuccess: true, timestamp: now + 2 },
-    { id: randomUUID(), role: 'assistant', content: 'Layout applied to canvas! 5 devices and 4 connections placed.', reactionType: 'response', timestamp: now + 3 },
+    { id: randomUUID(), role: 'assistant', content: zhThinking, reactionType: 'thinking', timestamp: now },
+    { id: randomUUID(), role: 'assistant', content: zh ? '正在生成系统拓扑' : 'Generating system topology', reactionType: 'tool_call', toolName: 'layout', toolInput: { prompt }, timestamp: now + 1 },
+    { id: randomUUID(), role: 'assistant', content: zh ? '布局已生成，正在应用到画布' : 'Topology generated, applying to canvas', reactionType: 'tool_result', toolName: 'layout', toolSuccess: true, timestamp: now + 2 },
+    { id: randomUUID(), role: 'assistant', content: zh ? `布局已应用！${pvKw}kW 光伏系统${battKwh > 0 ? `搭配 ${battKwh}kWh 储能` : ''}已放置到画布。点击设备可编辑参数，拖拽可调整位置。` : `Layout applied! ${pvKw}kW PV system${battKwh > 0 ? ` with ${battKwh}kWh storage` : ''} placed on canvas. Click devices to edit params, drag to reposition.`, reactionType: 'response', timestamp: now + 3 },
   ];
 }
 

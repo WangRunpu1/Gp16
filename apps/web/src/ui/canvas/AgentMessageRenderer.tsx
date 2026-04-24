@@ -7,10 +7,8 @@ import {
   BulbOutlined,
   ToolOutlined,
   FileTextOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  PlusOutlined,
   SendOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,11 +19,11 @@ const { Text } = Typography;
 interface Props {
   msg: AgentMessage;
   isLast: boolean;
-  onConfirm?: () => void;
-  onReject?: () => void;
+  onReply?: (text: string) => void;
+  onExecute?: () => void;
 }
 
-export function AgentMessageRenderer({ msg, isLast, onConfirm, onReject }: Props) {
+export function AgentMessageRenderer({ msg, isLast, onReply, onExecute }: Props) {
   const { t } = useTranslation();
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -120,27 +118,28 @@ export function AgentMessageRenderer({ msg, isLast, onConfirm, onReject }: Props
           </div>
           {isLast && (
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              {onExecute && (
+                <Button
+                  size="small"
+                  type="primary"
+                  icon={<ThunderboltOutlined />}
+                  onClick={onExecute}
+                  style={{
+                    fontSize: 10.5, borderRadius: 8, fontWeight: 600, height: 28,
+                    background: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
+                    border: 'none', boxShadow: '0 1px 4px rgba(139,92,246,0.3)',
+                  }}
+                >
+                  {t('executeOnCanvas')}
+                </Button>
+              )}
               <Button
                 size="small"
-                type="primary"
-                icon={<CheckOutlined />}
-                onClick={onConfirm}
-                style={{
-                  fontSize: 10.5, borderRadius: 8, fontWeight: 600, height: 28,
-                  background: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
-                  border: 'none', boxShadow: '0 1px 4px rgba(139,92,246,0.3)',
-                }}
-              >
-                {t('confirmExecute')}
-              </Button>
-              <Button
-                size="small"
-                danger
-                icon={<CloseOutlined />}
-                onClick={onReject}
+                icon={<SendOutlined />}
+                onClick={() => onReply?.(t('confirmExecute'))}
                 style={{ fontSize: 10.5, borderRadius: 8, fontWeight: 500, height: 28 }}
               >
-                {t('rejectAction')}
+                {t('replyContinue')}
               </Button>
               <Button
                 size="small"
@@ -161,8 +160,8 @@ export function AgentMessageRenderer({ msg, isLast, onConfirm, onReject }: Props
                 onChange={(e) => setInputValue(e.target.value)}
                 onPressEnter={() => {
                   const text = inputValue.trim();
-                  if (text && onConfirm) {
-                    onConfirm(text);
+                  if (text) {
+                    onReply?.(text);
                     setInputValue('');
                     setShowInput(false);
                   }
@@ -177,8 +176,8 @@ export function AgentMessageRenderer({ msg, isLast, onConfirm, onReject }: Props
                 icon={<SendOutlined />}
                 onClick={() => {
                   const text = inputValue.trim();
-                  if (text && onConfirm) {
-                    onConfirm(text);
+                  if (text) {
+                    onReply?.(text);
                     setInputValue('');
                     setShowInput(false);
                   }
