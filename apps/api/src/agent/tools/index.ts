@@ -1,4 +1,5 @@
 import type { AILayoutResult, Topology } from '@gp16/shared';
+import { z } from 'zod';
 
 export interface AgentContext {
   topology?: Topology;
@@ -85,7 +86,44 @@ export const layoutTool: AgentTool = {
   description: 'Generate a PV system topology layout',
   async execute(input, ctx) {
     const prompt = (input.prompt as string) ?? ctx.prompt;
-    const result = await callLLMForLayout(prompt).catch(() => null) ?? heuristicLayout(prompt);
+
+    // Schema to validate LLM output — must match expected structure
+    const layoutSchema = z.object({
+      layoutVersion: z.string(),
+      topology: z.object({
+        nodes: z.array(z.object({
+          id: z.string(),
+          position: z.object({ x: z.number(), y: z.number() }),
+          data: z.object({
+            label: z.string(),
+            deviceType: z.enum(['pv_panel', 'inverter', 'battery', 'charger', 'load', 'grid']),
+            ratedPowerKw: z.number().optional(),
+            capacityKwh: z.number().optional(),
+          }),
+        })),
+        edges: z.array(z.object({
+          id: z.string(),
+          source: z.string(),
+          target: z.string(),
+        })),
+      }),
+      assumptions: z.array(z.string()),
+    });
+
+    let result: AILayoutResult;
+    const llmResult = await callLLMForLayout(prompt).catch(() => null);
+    if (llmResult) {
+      const parsed = layoutSchema.safeParse(llmResult);
+      if (parsed.success) {
+        result = parsed.data as AILayoutResult;
+      } else {
+        console.warn('[layoutTool] LLM result schema invalid, falling back to heuristic', parsed.error.issues);
+        result = heuristicLayout(prompt);
+      }
+    } else {
+      result = heuristicLayout(prompt);
+    }
+
     return {
       success: true,
       summary: `布局已生成：${result.topology.nodes.length} 台设备，${result.topology.edges.length} 条连接`,

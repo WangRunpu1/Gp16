@@ -10,7 +10,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
 import { postJson, apiFetch } from '@/api/client';
-import type { AILayoutResult, AgentMessage, AgentMode } from '@gp16/shared';
+import type { AILayoutResult, AgentMessage, AgentMode, TopologyNode } from '@gp16/shared';
 import { AgentMessageRenderer } from './AgentMessageRenderer';
 
 interface ChatMessage {
@@ -49,6 +49,16 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
   const convIdRef = useRef<string | null>(null);
   const agentModeRef = useRef<AgentMode>(agentMode);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Safely apply layout nodes from external data (LLM/API), filtering malformed entries
+  function applyLayoutNodes(layoutNodes: TopologyNode[]) {
+    const safe = layoutNodes.filter(n => n?.data?.label && n?.data?.deviceType && n?.id && n?.position);
+    if (safe.length > 0) {
+      setNodes(safe);
+    }
+    if (safe.length < layoutNodes.length) {
+      console.warn('[AIChatPanel] filtered out malformed nodes:', layoutNodes.length - safe.length);
+    }
+  }
   const setNodes = useTopologyStore((s) => s.setNodes);
   const setEdges = useTopologyStore((s) => s.setEdges);
   const nodes = useTopologyStore((s) => s.nodes);
@@ -134,7 +144,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
 
       // Apply layout if agent mode returned one
       if (agentModeRef.current === 'agent' && res.layout) {
-        setNodes(res.layout.topology.nodes);
+        applyLayoutNodes(res.layout.topology.nodes);
         setEdges(res.layout.topology.edges);
       }
 
@@ -159,7 +169,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
           );
           if (pollRes.state === 'completed' && pollRes.result) {
             if (agentModeRef.current === 'agent') {
-              setNodes(pollRes.result.topology.nodes);
+              applyLayoutNodes(pollRes.result.topology.nodes);
               setEdges(pollRes.result.topology.edges);
             }
             const nodeCount = pollRes.result.topology.nodes.length;
@@ -225,7 +235,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       );
 
       if (apiRes.layout) {
-        setNodes(apiRes.layout.topology.nodes);
+        applyLayoutNodes(apiRes.layout.topology.nodes);
         setEdges(apiRes.layout.topology.edges);
       }
 
@@ -251,7 +261,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
             `/api/ai/layout/${taskId}`,
           );
           if (pollRes.state === 'completed' && pollRes.result) {
-            setNodes(pollRes.result.topology.nodes);
+            applyLayoutNodes(pollRes.result.topology.nodes);
             setEdges(pollRes.result.topology.edges);
             const nodeCount = pollRes.result.topology.nodes.length;
             const edgeCount = pollRes.result.topology.edges.length;
