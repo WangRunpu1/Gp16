@@ -85,12 +85,20 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     }
   }
 
-  // Collect the last user message content for re-send in agent mode
+  // Collect the last user message + plan scheme for re-send in agent mode
   const lastUserContent = messages
     .filter(m => m.role === 'user')
     .slice(-1)[0]?.content ?? '';
   const lastUserContentRef = useRef('');
   useEffect(() => { lastUserContentRef.current = lastUserContent; }, [lastUserContent]);
+
+  // Collect plan scheme from assistant's planning + response messages
+  const planScheme = messages
+    .filter(m => m.role === 'assistant' && (m.reactionType === 'planning' || m.reactionType === 'response'))
+    .map(m => m.content)
+    .join('\n');
+  const planSchemeRef = useRef('');
+  useEffect(() => { planSchemeRef.current = planScheme; }, [planScheme]);
 
   function scrollToBottom() {
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
@@ -180,23 +188,30 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, nodes, edges, input, t]);
 
-  // Auto-execute: switch to agent mode, create new conversation, re-send last user request
+  // Auto-execute: switch to agent mode, pass plan scheme, auto-generate layout
   const handleAutoExecute = useCallback(async () => {
-    // 1. Switch to agent mode
+    const userRequest = lastUserContentRef.current.trim();
+    const scheme = planSchemeRef.current.trim();
+    if (!userRequest) return;
+
+    // Switch to agent mode first
     onModeChange?.('agent');
 
-    // 2. Reset conversation ID so a new one is created in agent mode
+    // Build a prompt that includes the plan's design scheme as context
+    const agentPrompt = scheme
+      ? `按照以下设计方案生成光伏系统拓扑布局：\n\n${scheme}\n\n原始需求：${userRequest}`
+      : userRequest;
+
+    // Reset conversation — new agent-mode conversation
     setConvId(null);
     convIdRef.current = null;
 
-    // 3. Wait a tick for mode change to propagate, then re-send
-    await new Promise(r => setTimeout(r, 200));
-
-    // Re-send the last user message content to trigger agent execution
-    const text = lastUserContentRef.current.trim();
-    if (!text) return;
-
+    // Show a loading message while executing
+    const loadingMsg: ChatMessage = { role: 'assistant', content: '', loading: true };
+    setMessages((prev) => [...prev, loadingMsg]);
+    scrollToBottom();
     setLoading(true);
+
     try {
       const res = await postJson<{ id: string }>('/api/agent/conversations', { mode: 'agent' });
       const cid = res.id;
@@ -206,7 +221,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
       const topology = { nodes, edges };
       const apiRes = await postJson<{ messages: AgentMessage[]; layout?: AILayoutResult }>(
         `/api/agent/${cid}/message`,
-        { content: text, topology },
+        { content: agentPrompt, topology },
       );
 
       if (apiRes.layout) {
@@ -223,12 +238,13 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
         toolSuccess: m.toolSuccess,
       }));
 
-      setMessages((prev) => [...prev, { role: 'user', content: text }, ...newMsgs]);
+      // Replace loading message with agent response
+      setMessages((prev) => [...prev.slice(0, -1), ...newMsgs]);
       scrollToBottom();
     } catch (e: any) {
       // Fallback: try the old layout API
       try {
-        const { taskId } = await postJson<{ taskId: string }>('/api/ai/layout', { prompt: text });
+        const { taskId } = await postJson<{ taskId: string }>('/api/ai/layout', { prompt: agentPrompt });
         for (let i = 0; i < 60; i++) {
           await new Promise((r) => setTimeout(r, 1500));
           const pollRes = await apiFetch<{ state: string; result?: AILayoutResult; failedReason?: string }>(
@@ -239,8 +255,11 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
             setEdges(pollRes.result.topology.edges);
             const nodeCount = pollRes.result.topology.nodes.length;
             const edgeCount = pollRes.result.topology.edges.length;
-            const reply = t('aiSuccessMsg', { nodes: nodeCount, edges: edgeCount });
-            setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: reply }]);
+            const assumptionLines = pollRes.result.assumptions?.length
+              ? '\n\n' + t('aiAssumptions') + '\n' + pollRes.result.assumptions.map((a: string) => `• ${a}`).join('\n')
+              : '';
+            const reply = t('aiSuccessMsg', { nodes: nodeCount, edges: edgeCount }) + assumptionLines;
+            setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', content: reply }]);
             scrollToBottom();
             return;
           }
@@ -248,7 +267,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
         }
         throw new Error('timeout');
       } catch (e2: any) {
-        setMessages((prev) => [...prev, { role: 'user', content: text }, { role: 'assistant', content: t('aiFailMsg', { err: e2?.message ?? e }) }]);
+        setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', content: t('aiFailMsg', { err: e2?.message ?? e2 }) }]);
         scrollToBottom();
       }
     } finally {
@@ -427,6 +446,7 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
                   isLast={i === messages.length - 1}
                   onReply={sendMessage}
                   onExecute={handleAutoExecute}
+                  loading={loading}
                 />
               ) : (
                 <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>

@@ -21,9 +21,10 @@ interface Props {
   isLast: boolean;
   onReply?: (text: string) => void;
   onExecute?: () => void;
+  loading?: boolean;
 }
 
-export function AgentMessageRenderer({ msg, isLast, onReply, onExecute }: Props) {
+export function AgentMessageRenderer({ msg, isLast, onReply, onExecute, loading }: Props) {
   const { t } = useTranslation();
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -124,6 +125,8 @@ export function AgentMessageRenderer({ msg, isLast, onReply, onExecute }: Props)
                   type="primary"
                   icon={<ThunderboltOutlined />}
                   onClick={onExecute}
+                  disabled={loading}
+                  loading={loading}
                   style={{
                     fontSize: 10.5, borderRadius: 8, fontWeight: 600, height: 28,
                     background: 'linear-gradient(135deg,#8b5cf6,#6366f1)',

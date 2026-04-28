@@ -51,17 +51,10 @@ const PLAN_SYSTEM = `You are a senior photovoltaic (PV) system design consultant
 ## Your role
 Analyze the user's requirements, extract key parameters (capacity, load type, grid connection, storage needs), and guide them toward a complete system design through focused questions.
 
-## IMPORTANT CONSTRAINTS — PLAN MODE ONLY
-- You are in PLAN/CONSULT mode. You MUST NOT output "tool_call" or "tool_result" reaction types under any circumstance.
-- Your job is to ANALYZE and RECOMMEND, not to execute or generate layouts.
-- NEVER describe yourself as having generated a layout or applied anything to the canvas.
-- Your "response" messages MUST NOT mention layout generation, canvas operations, device counts, connections, or topology. You are a consultant giving advice, not an operator.
-- BANNED phrases in "response": "Layout generated", "placed on canvas", "devices", "connections", "topology applied", "click to edit", "drag to rearrange". Use design terminology instead: "Recommended configuration", "System design", "Suggested equipment".
-
 ## Conversation state detection
 - **First interaction (no history)**: Assess how much info the user provided. If vague → ask questions. If detailed → give recommendation.
 - **Follow-up (user answers your question)**: Acknowledge their answer, extract any new numbers, then give a tailored recommendation. Don't ask about things they just answered.
-- **Confirmation (user says "yes"/"ok"/"确认")**: Acknowledge agreement, present the final design scheme with specific parameters, then output a question-type message asking if they want to generate the layout on canvas.
+- **Confirmation (user says "yes"/"ok"/"确认")**: Treat it as agreement and provide the next actionable step or detailed plan.
 
 ## Information extraction
 From the user's message, identify:
@@ -74,9 +67,9 @@ From the user's message, identify:
 ## Output format (JSON array, ONLY this, nothing else)
 [
   {"reactionType":"thinking","content":"Your internal analysis"},
-  {"reactionType":"planning","content":"Step-by-step design approach with parameters"},
-  {"reactionType":"response","content":"Your recommendation — design advice ONLY, no layout/canvas language"},
-  {"reactionType":"question","content":"ONE specific clarifying question, or the 'generate on canvas' prompt"}
+  {"reactionType":"planning","content":"Step-by-step approach"},
+  {"reactionType":"response","content":"Your recommendation or answer to the user"},
+  {"reactionType":"question","content":"ONE specific clarifying question if needed"}
 ]
 
 ## Guidelines for questions
@@ -86,45 +79,38 @@ From the user's message, identify:
 - Always match the user's language
 - If you have enough info for a recommendation, don't ask questions — give the recommendation directly
 - In follow-up responses, acknowledge what the user said before asking a new question
-- When the user has confirmed/agreed to your recommendation, output a question like "是否按照以上方案在画布上生成布局？点击'在画布上执行'按钮即可。" (or English equivalent: "Shall I generate the layout on canvas based on this scheme? Click the 'Execute on Canvas' button.")
 
 ## Guidelines for response
 - Include specific numbers from the user's input
 - Reference their use case (residential, commercial, industrial)
 - Suggest inverter type, battery chemistry, grid connection mode
 - Be concise but actionable
-- NEVER use words like: layout, canvas, devices, connections, topology, drag, click`;
+- If user confirmed, acknowledge the confirmation and proceed`;
 
 const AGENT_SYSTEM = `You are a PV system design Agent with autonomous tool execution capabilities. You communicate in the same language the user uses.
 
-## CRITICAL RULE — EXECUTE, DON'T ASK
-- You are in EXECUTION mode. Your job is to GENERATE, not to consult.
-- NEVER ask "是否生成" / "要不要" / "Shall I generate" / "Would you like me to". Just do it.
-- NEVER output a "question" reactionType. You are not here to chat — you are here to build.
-- If the user's message contains specific parameters (kW, kWh) OR a design scheme, immediately call the layout tool.
-- Only if the input is truly empty or nonsensical (e.g. "asdf", "hello" with no context), output a brief thinking + question asking for parameters.
-
 ## Your role
-1. Receive user requirements or a pre-planned design scheme
-2. IMMEDIATELY call the layout tool to generate system topology
+1. Analyze user requirements
+2. Call the layout tool to generate system topology
 3. Call the analysis tool to evaluate green benefits
-4. Report results
+4. Apply results to the canvas
 
 ## Available tools
-- layout: Generate system topology. Input: {"prompt": "User requirement description including all known parameters"}
+- layout: Generate system topology. Input: {"prompt": "User requirement description"}
 - analysis: Analyze green benefits of current topology. Input: {}
 - validate: Validate topology correctness. Input: {}
 
 ## Output format (JSON array, ONLY this)
 [
-  {"reactionType":"thinking","content":"Extracting parameters from design scheme..."},
-  {"reactionType":"tool_call","toolName":"layout","toolInput":{"prompt":"50kW PV + 100kWh LFP storage, commercial grid-tied"},"content":"Generating layout..."},
+  {"reactionType":"thinking","content":"Analyzing requirements..."},
+  {"reactionType":"tool_call","toolName":"layout","toolInput":{"prompt":"..."},"content":"Generating layout..."},
   {"reactionType":"tool_result","toolName":"layout","toolSuccess":true,"content":"Layout generated: 5 nodes, 4 connections"},
   {"reactionType":"tool_call","toolName":"analysis","toolInput":{},"content":"Analyzing benefits..."},
-  {"reactionType":"tool_result","toolName":"analysis","toolSuccess":true,"content":"Annual generation: 48000kWh, CO2 saved: 26.4t"},
-  {"reactionType":"response","content":"System layout completed. PV capacity: 50kW, Storage: 100kWh. Annual generation ~48000kWh, CO2 reduction ~26.4t/year."}
+  {"reactionType":"tool_result","toolName":"analysis","toolSuccess":true,"content":"Annual generation: 12000kWh"},
+  {"reactionType":"response","content":"Layout applied to canvas! Annual generation ~12000kWh..."}
 ]
 
+If the user's request is too vague, respond with thinking + question instead of calling tools.
 Match the user's language (Chinese ↔ English).`;
 
 // ── Message schema for LLM output parsing ─────────────────────────────────────
@@ -173,7 +159,7 @@ function extractInfo(text: string, prevContext?: ExtractedInfo): ExtractedInfo {
     hasCharger: /charger|充电桩/i.test(lower),
     hasEv: /ev|electric vehicle|电动车|vehicle/i.test(lower),
     isQuestion: /[?？]/.test(text) || /^(what|how|do|can|could|would|is|are|which|whether|多少|什么|怎么|如何|是否|能不能|可不可以|好吗|行吗|需要)/i.test(lower),
-    isConfirmation: /^(yes|ok|sure|confirm|go ahead|proceed|好的|确认|执行|同意|可以|没问题|行|好|yeah|yep)/i.test(lower),
+    isConfirmation: /^(yes|ok|sure|confirm|go ahead|proceed|好的|确认|执行|同意|可以|没问题|行|好|yeah|yep|nop|不需要)/i.test(lower),
     hasNumbers: /\d+(?:\.\d+)?/.test(text),
     answeredCapacity: prevContext?.pvKw === null && pvMatch !== null,
     answeredStorage: prevContext?.battKwh === null && battMatch !== null,
@@ -232,15 +218,13 @@ function heuristicPlan(prompt: string, isFollowUp: boolean, prevAnswer: string |
       return [
         { id: randomUUID(), role: 'assistant', content: `收到，已更新参数`, reactionType: 'thinking', timestamp: now },
         { id: randomUUID(), role: 'assistant', content: `设计方案（${user}）：\n• 光伏装机：${pvKw} kW\n• 储能容量：${battKwh} kWh\n• 逆变器：${invType === 'central' ? '集中式' : '组串式'}，效率约 98%\n• 电池化学：LFP（磷酸铁锂），循环寿命 6000+\n• 接入方式：${info.hasOffGrid ? '离网独立供电' : '并网，余电可上网'}`, reactionType: 'planning', timestamp: now + 1 },
-        { id: randomUUID(), role: 'assistant', content: `推荐 ${pvKw}kW 光伏阵列搭配 ${battKwh}kWh LFP 储能系统。\n• 组串式逆变器便于扩展，支持组串级 MPPT 优化\n• 储能可作备用电源，停电时自动切换，${battKwh > pvKw ? '大容量适合削峰填谷' : '容量可满足夜间负载'}\n• ${info.hasOffGrid ? '离网模式需确保日发电量覆盖全天负载' : '并网模式下余电可上网，获得电费收益'}\n\n预计年发电量 ~${Math.round(pvKw * 1200)} kWh`, reactionType: 'response', timestamp: now + 2 },
-        { id: randomUUID(), role: 'assistant', content: '是否按照以上方案在画布上生成布局？点击"在画布上执行"按钮即可自动切换到 Agent 模式并生成拓扑。', reactionType: 'question', timestamp: now + 3 },
+        { id: randomUUID(), role: 'assistant', content: `推荐 ${pvKw}kW 光伏阵列搭配 ${battKwh}kWh LFP 储能系统。\n• 组串式逆变器便于扩展，支持组串级 MPPT 优化\n• 储能可作备用电源，停电时自动切换，${battKwh > pvKw ? '大容量适合削峰填谷' : '容量可满足夜间负载'}\n• ${info.hasOffGrid ? '离网模式需确保日发电量覆盖全天负载' : '并网模式下余电可上网，获得电费收益'}\n\n如需自动生成拓扑到画布，请切换到 Agent 模式。`, reactionType: 'response', timestamp: now + 2 },
       ];
     }
     return [
       { id: randomUUID(), role: 'assistant', content: `Parameters received, updating design`, reactionType: 'thinking', timestamp: now },
       { id: randomUUID(), role: 'assistant', content: `Design scheme (${user}):\n• PV capacity: ${pvKw} kW\n• Storage: ${battKwh} kWh\n• Inverter: ${invType}, ~98% efficiency\n• Battery chemistry: LFP, 6000+ cycles\n• Grid mode: ${info.hasOffGrid ? 'Off-grid standalone' : 'Grid-tied with feed-in'}`, reactionType: 'planning', timestamp: now + 1 },
-      { id: randomUUID(), role: 'assistant', content: `Recommended: ${pvKw}kW PV array with ${battKwh}kWh LFP storage.\n• String inverter for easy expansion, per-string MPPT optimization\n• Storage as backup — auto-switch on outage, ${battKwh > pvKw ? 'large capacity for peak shaving' : 'enough for nighttime load'}\n• ${info.hasOffGrid ? 'Off-grid mode requires generation to cover full-day load' : 'Grid-tied with feed-in revenue'}\n\nEst. annual generation ~${Math.round(pvKw * 1200)} kWh`, reactionType: 'response', timestamp: now + 2 },
-      { id: randomUUID(), role: 'assistant', content: 'Would you like to generate this layout on the canvas? Click the "Execute on Canvas" button to automatically switch to Agent mode and generate the topology.', reactionType: 'question', timestamp: now + 3 },
+      { id: randomUUID(), role: 'assistant', content: `Recommended: ${pvKw}kW PV array with ${battKwh}kWh LFP storage.\n• String inverter for easy expansion, per-string MPPT optimization\n• Storage as backup — auto-switch on outage, ${battKwh > pvKw ? 'large capacity for peak shaving' : 'enough for nighttime load'}\n• ${info.hasOffGrid ? 'Off-grid mode requires generation to cover full-day load' : 'Grid-tied with feed-in revenue'}\n\nSwitch to Agent mode to auto-generate the layout on canvas.`, reactionType: 'response', timestamp: now + 2 },
     ];
   }
 
@@ -260,8 +244,6 @@ function heuristicPlan(prompt: string, isFollowUp: boolean, prevAnswer: string |
       ];
       if (needsFollowUp) {
         msgs.push({ id: randomUUID(), role: 'assistant', content: followUp.zh, reactionType: 'question', timestamp: now + 3 });
-      } else {
-        msgs.push({ id: randomUUID(), role: 'assistant', content: '如需按此方案在画布上自动生成拓扑，请点击"在画布上执行"按钮。', reactionType: 'question', timestamp: now + 3 });
       }
       return msgs;
     }
@@ -273,8 +255,6 @@ function heuristicPlan(prompt: string, isFollowUp: boolean, prevAnswer: string |
     ];
     if (needsFollowUp) {
       msgs.push({ id: randomUUID(), role: 'assistant', content: followUp.en, reactionType: 'question', timestamp: now + 3 });
-    } else {
-      msgs.push({ id: randomUUID(), role: 'assistant', content: 'To generate this layout on the canvas, click the "Execute on Canvas" button.', reactionType: 'question', timestamp: now + 3 });
     }
     return msgs;
   }
@@ -306,7 +286,22 @@ function heuristicAgent(prompt: string, topology?: Topology): AgentMessage[] {
   const info = extractInfo(prompt);
   const zh = isZh(prompt);
 
-  // In agent mode, always generate — never ask questions
+  // If input is extremely vague, ask a question instead of executing
+  if (prompt.length < 15 && info.pvKw === null && info.battKwh === null && !info.hasStorage && !info.hasCommercial && !info.hasResidential && !info.hasIndustrial) {
+    const q = generateFollowUp(info, 10, 20);
+    if (zh) {
+      return [
+        { id: randomUUID(), role: 'assistant', content: '分析需求中，需要更多信息才能生成布局', reactionType: 'thinking', timestamp: now },
+        { id: randomUUID(), role: 'assistant', content: q.zh, reactionType: 'question', timestamp: now + 1 },
+      ];
+    }
+    return [
+      { id: randomUUID(), role: 'assistant', content: 'Analyzing requirements — need more details to generate a layout', reactionType: 'thinking', timestamp: now },
+      { id: randomUUID(), role: 'assistant', content: q.en, reactionType: 'question', timestamp: now + 1 },
+    ];
+  }
+
+  // Otherwise, generate a proper layout
   const pvKw = info.pvKw ?? 10;
   const battKwh = info.battKwh ?? (info.hasStorage ? 20 : 0);
   const zhThinking = zh
@@ -316,7 +311,8 @@ function heuristicAgent(prompt: string, topology?: Topology): AgentMessage[] {
   return [
     { id: randomUUID(), role: 'assistant', content: zhThinking, reactionType: 'thinking', timestamp: now },
     { id: randomUUID(), role: 'assistant', content: zh ? '正在生成系统拓扑' : 'Generating system topology', reactionType: 'tool_call', toolName: 'layout', toolInput: { prompt }, timestamp: now + 1 },
-    { id: randomUUID(), role: 'assistant', content: zh ? `方案已执行：${pvKw}kW 光伏系统${battKwh > 0 ? `搭配 ${battKwh}kWh 储能` : ''}已生成。` : `Scheme executed: ${pvKw}kW PV system${battKwh > 0 ? ` with ${battKwh}kWh storage` : ''} generated.`, reactionType: 'response', timestamp: now + 3 },
+    { id: randomUUID(), role: 'assistant', content: zh ? '布局已生成，正在应用到画布' : 'Topology generated, applying to canvas', reactionType: 'tool_result', toolName: 'layout', toolSuccess: true, timestamp: now + 2 },
+    { id: randomUUID(), role: 'assistant', content: zh ? `布局已应用！${pvKw}kW 光伏系统${battKwh > 0 ? `搭配 ${battKwh}kWh 储能` : ''}已放置到画布。点击设备可编辑参数，拖拽可调整位置。` : `Layout applied! ${pvKw}kW PV system${battKwh > 0 ? ` with ${battKwh}kWh storage` : ''} placed on canvas. Click devices to edit params, drag to reposition.`, reactionType: 'response', timestamp: now + 3 },
   ];
 }
 
@@ -363,12 +359,7 @@ export async function runAgentLoop(
       const parsed = JSON.parse(llmResponse) as z.infer<typeof reactionSchema>[];
       const validated = z.array(reactionSchema).safeParse(parsed);
       if (validated.success) {
-        // In plan mode, filter out tool_call/tool_result that LLM might produce
-        const filtered = mode === 'plan'
-          ? validated.data.filter(r => r.reactionType !== 'tool_call' && r.reactionType !== 'tool_result')
-          : validated.data;
-
-        llmMessages = filtered.map(r => ({
+        llmMessages = validated.data.map(r => ({
           id: randomUUID(),
           role: 'assistant' as const,
           content: r.content,
@@ -411,7 +402,7 @@ export async function runAgentLoop(
 
       try {
         if (tool) {
-          const result = await tool.execute((tc.toolInput as Record<string, unknown>) ?? {}, ctx);
+          const result = await tool.execute(tc.toolInput ?? {}, ctx);
           resultMsg.toolSuccess = true;
           resultMsg.content = result.summary;
 
