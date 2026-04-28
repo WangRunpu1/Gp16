@@ -95,7 +95,13 @@ From the user's message, identify:
 - Be concise but actionable
 - NEVER use words like: layout, canvas, devices, connections, topology, drag, click`;
 
-const AGENT_SYSTEM = `You are a PV system design Agent with autonomous tool execution capabilities. You communicate in the same language the user uses.
+const AGENT_SYSTEM = `You are a PV system design Agent with autonomous tool execution capabilities.
+
+## CRITICAL RULE — LANGUAGE CONSISTENCY
+- You MUST use the EXACT SAME language as the user throughout ALL reaction messages (thinking, tool_call, tool_result, response).
+- If the user writes in Chinese → ALL your content must be in Chinese. If English → ALL in English.
+- NEVER mix Chinese and English in a single response. NEVER switch languages mid-conversation.
+- The "Conversation language" field in the prompt tells you which language to use.
 
 ## CRITICAL RULE — EXECUTE, DON'T ASK
 - You are in EXECUTION mode. Your job is to GENERATE, not to consult.
@@ -344,8 +350,9 @@ export async function runAgentLoop(
     .map(m => `[${m.reactionType ?? m.role}] ${m.content}`)
     .join('\n');
 
-  const lang = isZh(userInput) ? 'Chinese' : 'English';
-  const prompt = `Current canvas: ${currentTopology ? `${currentTopology.nodes.length} devices, ${currentTopology.edges.length} connections` : 'Empty canvas'}\nConversation language: ${lang}\n\nHistory:\n${historyText}\n\nUser: ${userInput}`;
+  const lang = isZh(userInput) ? 'zh' as const : 'en' as const;
+  const langLabel = lang === 'zh' ? 'Chinese' : 'English';
+  const prompt = `Current canvas: ${currentTopology ? `${currentTopology.nodes.length} devices, ${currentTopology.edges.length} connections` : 'Empty canvas'}\nConversation language: ${langLabel}\n\nHistory:\n${historyText}\n\nUser: ${userInput}`;
 
   // Try LLM first
   let llmMessages: AgentMessage[] | null = null;
@@ -395,7 +402,7 @@ export async function runAgentLoop(
   let layoutResult: AILayoutResult | undefined;
   if (mode === 'agent') {
     const toolCalls = messages.filter(m => m.reactionType === 'tool_call');
-    const ctx: AgentContext = { topology: currentTopology, prompt: userInput };
+    const ctx: AgentContext = { topology: currentTopology, prompt: userInput, lang };
 
     for (const tc of toolCalls) {
       const tool = [layoutTool, analysisTool, validateTool].find(t => t.name === tc.toolName);
@@ -434,36 +441,3 @@ export async function runAgentLoop(
   return { messages, layout: layoutResult };
 }
 
-// ── Heuristic layout (for agent mode tool execution) ──────────────────────────
-
-function heuristicLayout(prompt: string): AILayoutResult {
-  const kwMatch = prompt.match(/(\d+(?:\.\d+)?)\s*kW/i);
-  const kwhMatch = prompt.match(/(\d+(?:\.\d+)?)\s*kWh/i);
-  const pvKw = kwMatch ? Number(kwMatch[1]) : 10;
-  const battKwh = kwhMatch ? Number(kwhMatch[1]) : 20;
-
-  return {
-    layoutVersion: 'v1',
-    topology: {
-      nodes: [
-        { id: 'pv1', position: { x: 100, y: 100 }, data: { label: `PV Array ${pvKw}kW`, deviceType: 'pv_panel', ratedPowerKw: pvKw } },
-        { id: 'inv1', position: { x: 340, y: 100 }, data: { label: `Inverter ${pvKw}kW`, deviceType: 'inverter', ratedPowerKw: pvKw } },
-        { id: 'bat1', position: { x: 340, y: 260 }, data: { label: `Battery ${battKwh}kWh`, deviceType: 'battery', capacityKwh: battKwh } },
-        { id: 'load1', position: { x: 580, y: 100 }, data: { label: `Load ${(pvKw * 0.6).toFixed(1)}kW`, deviceType: 'load', ratedPowerKw: pvKw * 0.6 } },
-        { id: 'grid1', position: { x: 580, y: 260 }, data: { label: 'Grid', deviceType: 'grid' } },
-      ],
-      edges: [
-        { id: 'e1', source: 'pv1', target: 'inv1' },
-        { id: 'e2', source: 'inv1', target: 'load1' },
-        { id: 'e3', source: 'bat1', target: 'inv1' },
-        { id: 'e4', source: 'grid1', target: 'inv1' },
-      ],
-    },
-    assumptions: [
-      `PV capacity: ${pvKw} kW`,
-      `Battery storage: ${battKwh} kWh`,
-      'Grid-tied + storage topology',
-      'Inverter power matched to PV',
-    ],
-  };
-}
