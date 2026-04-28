@@ -417,6 +417,8 @@ export async function runAgentLoop(
 
           if (tc.toolName === 'layout' && result.data) {
             layoutResult = result.data as AILayoutResult;
+            // Update context so subsequent tools (analysis/validate) see the new topology
+            ctx.topology = layoutResult.topology;
           }
         } else {
           resultMsg.content = `Unknown tool: ${tc.toolName}`;
