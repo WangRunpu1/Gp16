@@ -188,7 +188,7 @@ const zh = {
     redo: '重做',
     autoLayout: '自动布局',
     gridSnap: '网格对齐',
-    clearCanvas: '清空',
+    clearToolbar: '清空',
     confirmClear: '确认清空画布？此操作可撤销。',
     canvasCleared: '画布已清空',
     // Toolbar: Templates
@@ -406,7 +406,7 @@ const en = {
     redo: 'Redo',
     autoLayout: 'Auto Layout',
     gridSnap: 'Snap Grid',
-    clearCanvas: 'Clear',
+    clearToolbar: 'Clear',
     confirmClear: 'Clear the entire canvas? This can be undone.',
     canvasCleared: 'Canvas cleared',
     // Toolbar: Templates

@@ -296,7 +296,7 @@ export function BottomToolbar() {
 
   function handleClear() {
     Modal.confirm({
-      title: t('clearCanvas'),
+      title: t('clearToolbar'),
       content: t('confirmClear'),
       centered: true,
       onOk: () => {
@@ -405,9 +405,9 @@ export function BottomToolbar() {
           </div>
         </Tooltip>
 
-        <Tooltip title={t('clearCanvas')}><button style={actionBtnStyle(nodes.length === 0)} onClick={handleClear} disabled={nodes.length === 0}>
+        <Tooltip title={t('clearToolbar')}><button style={actionBtnStyle(nodes.length === 0)} onClick={handleClear} disabled={nodes.length === 0}>
           <ClearOutlined style={{ fontSize: 16, color: '#ef4444' }} />
-          <Typography.Text style={{ fontSize: 9.5, color: '#94a3b8', fontWeight: 500 }}>{t('clearCanvas')}</Typography.Text>
+          <Typography.Text style={{ fontSize: 9.5, color: '#94a3b8', fontWeight: 500 }}>{t('clearToolbar')}</Typography.Text>
         </button></Tooltip>
       </div>
 

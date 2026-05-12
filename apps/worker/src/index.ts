@@ -114,10 +114,10 @@ const COLORS: Record<string, string> = {
   charger: '#fff0f6',  load: '#f9f0ff',     grid: '#fff7e6',
 };
 
-function topologyToSvg(topology: any): string {
+function topologyToSvg(topology: any, lang: 'zh' | 'en' = 'zh'): string {
   const nodes: any[] = topology.nodes ?? [];
   const edges: any[] = topology.edges ?? [];
-  if (nodes.length === 0) return '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><text x="20" y="50" fill="#999">（无设备）</text></svg>';
+  if (nodes.length === 0) return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><text x="20" y="50" fill="#999">${lang === 'zh' ? '（无设备）' : '(No devices)'}</text></svg>`;
 
   const xs = nodes.map((n: any) => n.position.x);
   const ys = nodes.map((n: any) => n.position.y);
@@ -148,20 +148,50 @@ function topologyToSvg(topology: any): string {
 </svg>`;
 }
 
-// ── HTML Report (no Playwright needed) ───────────────────────────────────────
+// ── HTML Report (bilingual + html2pdf.js) ─────────────────────────────────────
 async function generateReport(payload: any): Promise<{ reportId: string; htmlPath: string }> {
   const reportId = String(payload.reportId ?? payload.taskId ?? Date.now());
   const topology = payload.topology ?? { nodes: [], edges: [] };
   const analysis = payload.analysis ?? null;
-  const svg = topologyToSvg(topology);
+  const lang: 'zh' | 'en' = payload.lang === 'en' ? 'en' : 'zh';
+  const svg = topologyToSvg(topology, lang);
 
-  const typeLabel: Record<string, string> = {
-    pv_panel:'光伏板', inverter:'逆变器', battery:'电池/储能',
-    charger:'充电桩', load:'负载', grid:'电网',
+  const L = {
+    title: lang === 'zh' ? 'GP16 光伏/电力系统 AI 辅助设计报告' : 'GP16 PV System AI-Assisted Design Report',
+    genTime: lang === 'zh' ? '生成时间' : 'Generated',
+    reportNo: lang === 'zh' ? '报告编号' : 'Report No.',
+    secTopo: lang === 'zh' ? '系统拓扑图' : 'System Topology',
+    secKpi: lang === 'zh' ? '绿色效益摘要' : 'Green Impact Summary',
+    secDevices: lang === 'zh' ? '设备清单' : 'Device List',
+    secCost: lang === 'zh' ? '累计成本对比（10年）' : 'Cumulative Cost Comparison (10yr)',
+    thName: lang === 'zh' ? '名称' : 'Name',
+    thType: lang === 'zh' ? '类型' : 'Type',
+    thPower: lang === 'zh' ? '额定功率' : 'Rated Power',
+    thCapacity: lang === 'zh' ? '容量' : 'Capacity',
+    thYear: lang === 'zh' ? '年份' : 'Year',
+    thTraditional: lang === 'zh' ? '传统模式累计' : 'Traditional Cum.',
+    thScheme: lang === 'zh' ? '本方案累计(含CAPEX)' : 'This Scheme (incl. CAPEX)',
+    thSavings: lang === 'zh' ? '累计节省' : 'Cum. Savings',
+    kpiPv: lang === 'zh' ? '光伏装机' : 'PV Installed',
+    kpiGen: lang === 'zh' ? '年发电量' : 'Annual Generation',
+    kpiCo2: lang === 'zh' ? '年减排' : 'CO₂ Saved/yr',
+    kpiTrees: lang === 'zh' ? '等效植树' : 'Equiv. Trees',
+    kpiCapex: lang === 'zh' ? '总投资' : 'Total CAPEX',
+    kpiPayback: lang === 'zh' ? '回收期' : 'Payback',
+    noData: lang === 'zh' ? '暂无分析数据' : 'No analysis data',
+    noDevices: lang === 'zh' ? '（无设备）' : '(No devices)',
+    btnPrint: lang === 'zh' ? '🖨️ 打印 / 保存为 PDF' : '🖨️ Print / Save as PDF',
+    btnDownload: lang === 'zh' ? '📥 一键下载 PDF' : '📥 Download PDF',
+    treesUnit: lang === 'zh' ? '棵' : 'trees',
+    yrUnit: lang === 'zh' ? '年' : 'yr',
   };
 
+  const typeLabel: Record<string, string> = lang === 'zh'
+    ? { pv_panel:'光伏板', inverter:'逆变器', battery:'电池/储能', charger:'充电桩', load:'负载', grid:'电网' }
+    : { pv_panel:'PV Panel', inverter:'Inverter', battery:'Battery', charger:'EV Charger', load:'Load', grid:'Grid' };
+
   const deviceRows = (topology.nodes ?? []).map((n: any) => {
-    const t = esc(typeLabel[n.data?.deviceType] ?? n.data?.deviceType ?? '');
+    const t = esc(typeLabel[n.data?.deviceType] ?? '');
     const l = esc(n.data?.label ?? n.id);
     const p = n.data?.ratedPowerKw != null ? `${n.data.ratedPowerKw} kW` : '-';
     const c = n.data?.capacityKwh  != null ? `${n.data.capacityKwh} kWh` : '-';
@@ -174,13 +204,13 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
 
   const kpiHtml = s ? `
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">光伏装机</div><div class="kpi-val">${Number(s.pvInstalledKw).toFixed(1)} kW</div></div>
-      <div class="kpi-card"><div class="kpi-label">年发电量</div><div class="kpi-val">${Math.round(s.annualGenerationKwh).toLocaleString()} kWh</div></div>
-      <div class="kpi-card"><div class="kpi-label">年减排</div><div class="kpi-val">${Number(s.annualCo2SavedTons).toFixed(2)} tCO₂</div></div>
-      <div class="kpi-card"><div class="kpi-label">等效植树</div><div class="kpi-val">${Math.round(s.equivalentTrees).toLocaleString()} 棵</div></div>
-      <div class="kpi-card"><div class="kpi-label">总投资</div><div class="kpi-val">¥${Math.round(s.totalCapex).toLocaleString()}</div></div>
-      ${payback != null ? `<div class="kpi-card"><div class="kpi-label">简单回收期</div><div class="kpi-val">${Number(payback).toFixed(1)} 年</div></div>` : ''}
-    </div>` : '<p style="color:#6b7280">暂无分析数据</p>';
+      <div class="kpi-card"><div class="kpi-label">${L.kpiPv}</div><div class="kpi-val">${Number(s.pvInstalledKw).toFixed(1)} kW</div></div>
+      <div class="kpi-card"><div class="kpi-label">${L.kpiGen}</div><div class="kpi-val">${Math.round(s.annualGenerationKwh).toLocaleString()} kWh</div></div>
+      <div class="kpi-card"><div class="kpi-label">${L.kpiCo2}</div><div class="kpi-val">${Number(s.annualCo2SavedTons).toFixed(2)} tCO₂</div></div>
+      <div class="kpi-card"><div class="kpi-label">${L.kpiTrees}</div><div class="kpi-val">${Math.round(s.equivalentTrees).toLocaleString()} ${L.treesUnit}</div></div>
+      <div class="kpi-card"><div class="kpi-label">${L.kpiCapex}</div><div class="kpi-val">¥${Math.round(s.totalCapex).toLocaleString()}</div></div>
+      ${payback != null ? `<div class="kpi-card"><div class="kpi-label">${L.kpiPayback}</div><div class="kpi-val">${Number(payback).toFixed(1)} ${L.yrUnit}</div></div>` : ''}
+    </div>` : `<p style="color:#6b7280">${L.noData}</p>`;
 
   const costRows = costSeries.map((p: any) => {
     const saving = p.traditionalCost - p.schemeCost;
@@ -188,10 +218,12 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
     return `<tr><td>${p.year}</td><td>¥${Math.round(p.traditionalCost).toLocaleString()}</td><td>¥${Math.round(p.schemeCost).toLocaleString()}</td><td style="color:${color}">¥${Math.round(saving).toLocaleString()}</td></tr>`;
   }).join('');
 
-  const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
-<title>GP16 设计报告</title>
+  const dateLocale = lang === 'zh' ? 'zh-CN' : 'en-US';
+
+  const html = `<!doctype html><html lang="${lang === 'zh' ? 'zh-CN' : 'en'}"><head><meta charset="utf-8">
+<title>${L.title}</title>
 <style>
-  body{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif;padding:32px;color:#111;font-size:13px;line-height:1.6}
+  body{font-family:${lang === 'zh' ? '"PingFang SC","Microsoft YaHei",Arial,sans-serif' : 'Arial,"Helvetica Neue",sans-serif'};padding:32px;color:#111;font-size:13px;line-height:1.6}
   h1{font-size:20px;font-weight:700;margin:0 0 4px}
   .sub{color:#6b7280;font-size:12px;margin-bottom:24px}
   .sec{font-size:14px;font-weight:700;margin:20px 0 8px;padding-left:10px;border-left:4px solid #1677ff}
@@ -204,24 +236,51 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
   .kpi-label{font-size:11px;color:#6b7280}
   .kpi-val{font-size:18px;font-weight:700;color:#1677ff;margin-top:4px}
   svg{max-width:100%;height:auto}
+  .btn-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .btn{padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+  .btn-print{background:#1677ff;color:#fff}.btn-pdf{background:#16a34a;color:#fff}
   @media print{body{padding:16px}.no-print{display:none}}
-</style></head><body>
-  <div class="no-print" style="margin-bottom:16px">
-    <button onclick="window.print()" style="padding:8px 20px;background:#1677ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ 打印 / 保存为 PDF</button>
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head><body>
+  <div class="no-print btn-row">
+    <button class="btn btn-print" onclick="window.print()">${L.btnPrint}</button>
+    <button class="btn btn-pdf" id="btn-download-pdf">${L.btnDownload}</button>
   </div>
-  <h1>GP16 光伏/电力系统 AI 辅助设计报告</h1>
-  <div class="sub">生成时间：${esc(new Date().toLocaleString('zh-CN'))}　报告编号：${esc(reportId)}</div>
-  <div class="sec">系统拓扑图</div>
-  <div class="card">${svg}</div>
-  <div class="sec">绿色效益摘要</div>
-  <div class="card">${kpiHtml}</div>
-  <div class="sec">设备清单</div>
-  <div class="card"><table><thead><tr><th>名称</th><th>类型</th><th>额定功率</th><th>容量</th></tr></thead>
-  <tbody>${deviceRows || '<tr><td colspan="4" style="text-align:center;color:#999">（无设备）</td></tr>'}</tbody></table></div>
-  ${costSeries.length > 0 ? `
-  <div class="sec">累计成本对比（10年）</div>
-  <div class="card"><table><thead><tr><th>年份</th><th>传统模式累计</th><th>本方案累计(含CAPEX)</th><th>累计节省</th></tr></thead>
-  <tbody>${costRows}</tbody></table></div>` : ''}
+  <div id="report-content">
+    <h1>${L.title}</h1>
+    <div class="sub">${L.genTime}：${esc(new Date().toLocaleString(dateLocale))}　${L.reportNo}：${esc(reportId)}</div>
+    <div class="sec">${L.secTopo}</div>
+    <div class="card">${svg}</div>
+    <div class="sec">${L.secKpi}</div>
+    <div class="card">${kpiHtml}</div>
+    <div class="sec">${L.secDevices}</div>
+    <div class="card"><table><thead><tr><th>${L.thName}</th><th>${L.thType}</th><th>${L.thPower}</th><th>${L.thCapacity}</th></tr></thead>
+    <tbody>${deviceRows || `<tr><td colspan="4" style="text-align:center;color:#999">${L.noDevices}</td></tr>`}</tbody></table></div>
+    ${costSeries.length > 0 ? `
+    <div class="sec">${L.secCost}</div>
+    <div class="card"><table><thead><tr><th>${L.thYear}</th><th>${L.thTraditional}</th><th>${L.thScheme}</th><th>${L.thSavings}</th></tr></thead>
+    <tbody>${costRows}</tbody></table></div>` : ''}
+  </div>
+<script>
+  document.getElementById('btn-download-pdf').addEventListener('click', function() {
+    var el = document.getElementById('report-content');
+    var btn = document.getElementById('btn-download-pdf');
+    btn.textContent = '${lang === 'zh' ? '生成中...' : 'Generating...'}';
+    btn.disabled = true;
+    html2pdf().set({
+      margin: [10, 10, 10, 10],
+      filename: 'GP16-Report-${reportId}.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    }).from(el).save().then(function() {
+      btn.textContent = '${L.btnDownload}';
+      btn.disabled = false;
+    });
+  });
+</script>
 </body></html>`;
 
   const outDir = process.env.REPORT_DIR ?? path.resolve(process.cwd(), 'data', 'reports');

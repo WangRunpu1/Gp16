@@ -7,7 +7,7 @@ import { postJson, apiFetch } from '@/api/client';
 import { useDebouncedAnalysis } from '@/hooks/useDebouncedAnalysis';
 
 export function ReportButton() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const nodes = useTopologyStore((s) => s.nodes);
   const edges = useTopologyStore((s) => s.edges);
   const { data: analysis } = useDebouncedAnalysis(1200);
@@ -18,6 +18,7 @@ export function ReportButton() {
     try {
       const { taskId } = await postJson<{ taskId: string }>('/api/reports', {
         topology: { nodes, edges }, analysis,
+        lang: i18n.language?.startsWith('zh') ? 'zh' : 'en',
       });
 
       for (let i = 0; i < 120; i++) {
