@@ -135,7 +135,7 @@ function topologyToSvg(topology: any, lang: 'zh' | 'en' = 'zh'): string {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120" viewBox="0 0 400 120"><rect width="100%" height="100%" fill="#fafafa" rx="8"/><text x="200" y="60" text-anchor="middle" fill="#a0aec0" font-size="14" font-family="sans-serif">${emptyText}</text></svg>`;
   }
 
-  const NW = 148, NH = 68;
+  const NW = 200, NH = 68; // node card size (wider for longer labels)
   const PAD = 90;
 
   const minX = Math.min(...nodes.map(n => n.position.x)) - NW / 2;
@@ -170,12 +170,20 @@ function topologyToSvg(topology: any, lang: 'zh' | 'en' = 'zh'): string {
     const cy = n.position.y;
     const dt = n.data?.deviceType ?? '';
     const st = getDeviceStyle(dt, lang);
-    const label = n.data?.label ?? n.id;
     const specs: string[] = [];
     if (n.data?.ratedPowerKw != null) specs.push(`${n.data.ratedPowerKw} kW`);
     if (n.data?.capacityKwh != null) specs.push(`${n.data.capacityKwh} kWh`);
     const spec = specs.join('  ·  ');
     const hw = NW / 2, hh = NH / 2;
+
+    let label = n.data?.label ?? n.id;
+    const hasCJK = /[一-鿿]/.test(label);
+    if (lang === 'en' && hasCJK) {
+      label = st.title;
+      if (spec) label += ` ${spec}`;
+    }
+    const maxChars = lang === 'zh' ? 12 : 26;
+    if (label.length > maxChars) label = label.slice(0, maxChars - 1) + '…';
 
     return `
     <g transform="translate(${cx},${cy})">
@@ -184,8 +192,8 @@ function topologyToSvg(topology: any, lang: 'zh' | 'en' = 'zh'): string {
       <rect x="${-hw + 2}" y="${-hh + 2}" width="${NW - 4}" height="5" rx="2.5" fill="${st.accent}"/>
       <rect x="${-hw + 10}" y="${-hh + 16}" width="42" height="36" rx="7" fill="${st.stroke}" fill-opacity="0.12" stroke="${st.stroke}" stroke-width="1" stroke-opacity="0.3"/>
       <text x="${-hw + 31}" y="${-hh + 38}" font-size="22" text-anchor="middle" font-family="sans-serif">${st.icon}</text>
-      <text x="${-hw + 60}" y="${-hh + 26}" font-size="13" font-weight="700" fill="#1a202c" font-family="sans-serif">${esc(label)}</text>
-      <text x="${-hw + 60}" y="${-hh + 44}" font-size="9.5" fill="#64748b" font-weight="500" font-family="sans-serif">${st.title}${spec ? '  ·  ' + spec : ''}</text>
+      <text x="${-hw + 60}" y="${-hh + 25}" font-size="12" font-weight="700" fill="#1a202c" font-family="sans-serif">${esc(label)}</text>
+      <text x="${-hw + 60}" y="${-hh + 43}" font-size="9.5" fill="#64748b" font-weight="500" font-family="sans-serif">${st.title}${spec ? '  ·  ' + spec : ''}</text>
     </g>`;
   }).join('');
 
@@ -354,13 +362,14 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
     --gray-600: #718096; --gray-700: #4a5568; --gray-900: #1a202c;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:${lang === 'zh' ? '"PingFang SC","Microsoft YaHei","Noto Sans SC",Arial,sans-serif' : 'Arial,"Helvetica Neue",sans-serif'};color:var(--gray-900);font-size:12pt;line-height:1.7;background:#fff}
+  body{font-family:${lang === 'zh' ? '"PingFang SC","Microsoft YaHei","Noto Sans SC",Arial,sans-serif' : 'Arial,"Helvetica Neue",sans-serif'};color:var(--gray-900);font-size:12pt;line-height:1.7;background:#fff;padding:0}
+  #report-content{padding:32px}
   .no-print{position:fixed;top:16px;right:16px;z-index:100;display:flex;gap:8px}
   .btn{padding:10px 22px;border:none;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:all .15s}
   .btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.18)}
   .btn-print{background:var(--navy);color:#fff}.btn-pdf{background:var(--green);color:#fff}
 
-  .cover{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);color:#fff;padding:48px 40px 36px;border-radius:0;margin:-32px -32px 32px;position:relative;overflow:hidden}
+  .cover{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);color:#fff;padding:48px 40px 36px;border-radius:10px;margin:0 0 28px 0;position:relative;overflow:hidden}
   .cover::after{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:rgba(255,255,255,.04);border-radius:50%}
   .cover-logo{font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:8px}
   .cover h1{font-size:26px;font-weight:800;letter-spacing:.5px;margin-bottom:8px;line-height:1.3}
@@ -400,9 +409,10 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
   .disclaimer{margin-top:28px;padding:12px 16px;background:var(--gray-50);border-radius:6px;font-size:9px;color:var(--gray-400);text-align:center;line-height:1.5}
 
   @media print {
-    body{font-size:10pt}
+    body{font-size:10pt;padding:0}
+    #report-content{padding:0}
     .no-print{display:none !important}
-    .cover{margin:0;padding:36px 24px 28px;page-break-after:avoid}
+    .cover{margin:0;padding:36px 24px 28px;page-break-after:avoid;border-radius:0}
     .sec{page-break-after:avoid}
     .card{page-break-inside:avoid}
     .kpi-grid{page-break-inside:avoid}

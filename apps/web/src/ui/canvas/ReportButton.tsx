@@ -53,7 +53,7 @@ export function ReportButton() {
       type="primary"
       loading={loading}
       onClick={generate}
-      disabled={nodes.length === 0}
+      disabled={loading || nodes.length === 0}
       icon={<FilePdfOutlined />}
       block
       size="small"
