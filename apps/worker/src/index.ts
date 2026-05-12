@@ -104,48 +104,99 @@ async function callLLM(prompt: string): Promise<unknown> {
   }
 }
 
-// ── SVG helper ────────────────────────────────────────────────────────────────
+// ── SVG Topology Renderer (sticker-style nodes) ─────────────────────────────────
 function esc(s: string) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-const COLORS: Record<string, string> = {
-  pv_panel: '#fffbe6', inverter: '#e6f4ff', battery: '#f6ffed',
-  charger: '#fff0f6',  load: '#f9f0ff',     grid: '#fff7e6',
-};
+interface DeviceStyle {
+  icon: string; fill: string; stroke: string; accent: string; title: string;
+}
+
+function getDeviceStyle(dt: string, lang: 'zh' | 'en'): DeviceStyle {
+  const map: Record<string, { icon: string; fill: string; stroke: string; accent: string; zh: string; en: string }> = {
+    pv_panel:  { icon: '☀️', fill: '#fff8e1', stroke: '#f59e0b', accent: '#fcd34d', zh: '光伏板',   en: 'PV Panel' },
+    inverter:  { icon: '🔄',   fill: '#eff6ff', stroke: '#3b82f6', accent: '#93c5fd', zh: '逆变器',   en: 'Inverter' },
+    battery:   { icon: '🔋',   fill: '#f0fdf4', stroke: '#16a34a', accent: '#86efac', zh: '储能',     en: 'Battery' },
+    charger:   { icon: '🔌',   fill: '#fdf2f8', stroke: '#ec4899', accent: '#f9a8d4', zh: '充电桩',   en: 'Charger' },
+    load:      { icon: '🏠',   fill: '#faf5ff', stroke: '#8b5cf6', accent: '#c4b5fd', zh: '负载',     en: 'Load' },
+    grid:      { icon: '⚡',         fill: '#fff7ed', stroke: '#f97316', accent: '#fdba74', zh: '电网',     en: 'Grid' },
+  };
+  const v = map[dt] ?? { icon: '📦', fill: '#f5f5f5', stroke: '#94a3b8', accent: '#cbd5e1', zh: dt, en: dt };
+  return { icon: v.icon, fill: v.fill, stroke: v.stroke, accent: v.accent, title: lang === 'zh' ? v.zh : v.en };
+}
 
 function topologyToSvg(topology: any, lang: 'zh' | 'en' = 'zh'): string {
   const nodes: any[] = topology.nodes ?? [];
   const edges: any[] = topology.edges ?? [];
-  if (nodes.length === 0) return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100"><text x="20" y="50" fill="#999">${lang === 'zh' ? '（无设备）' : '(No devices)'}</text></svg>`;
+  const emptyText = lang === 'zh' ? '（无设备）' : '(No devices)';
 
-  const xs = nodes.map((n: any) => n.position.x);
-  const ys = nodes.map((n: any) => n.position.y);
-  const minX = Math.min(...xs), minY = Math.min(...ys);
-  const maxX = Math.max(...xs), maxY = Math.max(...ys);
-  const W = Math.max(800, maxX - minX + 240);
-  const H = Math.max(400, maxY - minY + 200);
-  const pad = 100;
+  if (!nodes.length) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="120" viewBox="0 0 400 120"><rect width="100%" height="100%" fill="#fafafa" rx="8"/><text x="200" y="60" text-anchor="middle" fill="#a0aec0" font-size="14" font-family="sans-serif">${emptyText}</text></svg>`;
+  }
 
-  const byId = new Map(nodes.map((n: any) => [n.id, n]));
-  const lines = edges.map((e: any) => {
-    const s = byId.get(e.source) as any, t = byId.get(e.target) as any;
+  const NW = 148, NH = 68;
+  const PAD = 90;
+
+  const minX = Math.min(...nodes.map(n => n.position.x)) - NW / 2;
+  const minY = Math.min(...nodes.map(n => n.position.y)) - NH / 2;
+  const maxX = Math.max(...nodes.map(n => n.position.x)) + NW / 2;
+  const maxY = Math.max(...nodes.map(n => n.position.y)) + NH / 2;
+
+  const vbX = minX - PAD;
+  const vbY = minY - PAD;
+  const vbW = maxX - minX + 2 * PAD;
+  const vbH = maxY - minY + 2 * PAD;
+  const svgW = Math.max(800, vbW);
+  const svgH = Math.max(420, vbH);
+
+  const nodeById = new Map(nodes.map(n => [n.id, n]));
+
+  const edgeEls = edges.map((e: any) => {
+    const s = nodeById.get(e.source);
+    const t = nodeById.get(e.target);
     if (!s || !t) return '';
-    return `<line x1="${s.position.x-minX+pad}" y1="${s.position.y-minY+pad}" x2="${t.position.x-minX+pad}" y2="${t.position.y-minY+pad}" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr)"/>`;
+    return `<line x1="${s.position.x}" y1="${s.position.y}" x2="${t.position.x}" y2="${t.position.y}" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>`;
   }).join('');
 
-  const rects = nodes.map((n: any) => {
-    const x = n.position.x - minX + pad, y = n.position.y - minY + pad;
-    const fill = COLORS[n.data?.deviceType] ?? '#f5f5f5';
-    const label = esc(n.data?.label ?? n.id);
-    return `<g><rect x="${x-50}" y="${y-22}" width="100" height="44" rx="8" fill="${fill}" stroke="#1677ff" stroke-width="1.5"/><text x="${x}" y="${y+5}" font-size="11" text-anchor="middle" fill="#111">${label}</text></g>`;
+  const portEls = edges.map((e: any) => {
+    const t = nodeById.get(e.target);
+    if (!t) return '';
+    return `<circle cx="${t.position.x}" cy="${t.position.y}" r="4" fill="#94a3b8"/>`;
   }).join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
-  <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/></marker></defs>
-  <rect width="100%" height="100%" fill="#fff"/>
-  ${lines}${rects}
-</svg>`;
+  const nodeEls = nodes.map((n: any) => {
+    const cx = n.position.x;
+    const cy = n.position.y;
+    const dt = n.data?.deviceType ?? '';
+    const st = getDeviceStyle(dt, lang);
+    const label = n.data?.label ?? n.id;
+    const specs: string[] = [];
+    if (n.data?.ratedPowerKw != null) specs.push(`${n.data.ratedPowerKw} kW`);
+    if (n.data?.capacityKwh != null) specs.push(`${n.data.capacityKwh} kWh`);
+    const spec = specs.join('  ·  ');
+    const hw = NW / 2, hh = NH / 2;
+
+    return `
+    <g transform="translate(${cx},${cy})">
+      <rect x="${-hw - 3}" y="${-hh - 3}" width="${NW + 6}" height="${NH + 6}" rx="13" fill="rgba(0,0,0,0.07)"/>
+      <rect x="${-hw}" y="${-hh}" width="${NW}" height="${NH}" rx="11" fill="${st.fill}" stroke="${st.stroke}" stroke-width="2"/>
+      <rect x="${-hw + 2}" y="${-hh + 2}" width="${NW - 4}" height="5" rx="2.5" fill="${st.accent}"/>
+      <rect x="${-hw + 10}" y="${-hh + 16}" width="42" height="36" rx="7" fill="${st.stroke}" fill-opacity="0.12" stroke="${st.stroke}" stroke-width="1" stroke-opacity="0.3"/>
+      <text x="${-hw + 31}" y="${-hh + 38}" font-size="22" text-anchor="middle" font-family="sans-serif">${st.icon}</text>
+      <text x="${-hw + 60}" y="${-hh + 26}" font-size="13" font-weight="700" fill="#1a202c" font-family="sans-serif">${esc(label)}</text>
+      <text x="${-hw + 60}" y="${-hh + 44}" font-size="9.5" fill="#64748b" font-weight="500" font-family="sans-serif">${st.title}${spec ? '  ·  ' + spec : ''}</text>
+    </g>`;
+  }).join('');
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${svgW}" height="${svgH}" style="background:#fdfdfd;border-radius:8px">
+    <rect width="100%" height="100%" fill="#fdfdfd" rx="8"/>
+    <defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="0.8" fill="#e2e8f0"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#g)" opacity="0.5"/>
+    ${edgeEls}
+    ${portEls}
+    ${nodeEls}
+  </svg>`;
 }
 
 // ── AI Commentary ──────────────────────────────────────────────────────────────
@@ -340,8 +391,8 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
   tbody tr:hover{background:var(--blue-light)}
   .text-green{color:var(--green)}.text-red{color:var(--red)}.text-muted{color:var(--gray-400)}
 
-  .svg-wrap{display:flex;justify-content:center;background:#fff;border-radius:8px;padding:12px}
-  .svg-wrap svg{max-width:100%;height:auto}
+  .svg-wrap{display:flex;justify-content:center;background:#fff;border-radius:8px;padding:12px;overflow:hidden}
+  .svg-wrap svg{width:100%;height:auto;display:block}
 
   .empty-state{text-align:center;padding:24px;color:var(--gray-400);font-style:italic}
 
