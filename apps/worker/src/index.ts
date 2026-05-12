@@ -526,14 +526,15 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
     btn.addEventListener('click', function() {
       btn.textContent = '${lang === 'zh' ? '生成中...' : 'Generating...'}';
       btn.disabled = true;
+      var el = document.getElementById('report-content');
       html2pdf().set({
-        margin: [12, 12, 12, 12],
-        filename: 'GP16-Report-${reportId}.pdf',
+        margin: [8, 8, 8, 8],
+        filename: 'Report.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowHeight: el.scrollHeight },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      }).from(document.getElementById('report-content')).save().then(function() {
+        pagebreak: { mode: ['css', 'legacy'] }
+      }).from(el).save().then(function() {
         btn.textContent = '${L.btnDownload}';
         btn.disabled = false;
       });
