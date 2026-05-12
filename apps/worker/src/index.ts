@@ -404,62 +404,68 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
     --gray-600: #718096; --gray-700: #4a5568; --gray-900: #1a202c;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:${lang === 'zh' ? '"PingFang SC","Microsoft YaHei","Noto Sans SC",Arial,sans-serif' : 'Arial,"Helvetica Neue",sans-serif'};color:var(--gray-900);font-size:12pt;line-height:1.7;background:#fff;padding:0}
-  #report-content{padding:32px}
+  body{font-family:${lang === 'zh' ? '"PingFang SC","Microsoft YaHei","Noto Sans SC",Arial,sans-serif' : 'Arial,"Helvetica Neue",sans-serif'};color:var(--gray-900);font-size:10.5pt;line-height:1.55;background:#fff;padding:0}
+  #report-content{padding:0 28px 24px}
   .no-print{position:fixed;top:16px;right:16px;z-index:100;display:flex;gap:8px}
   .btn{padding:10px 22px;border:none;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600;letter-spacing:.3px;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:all .15s}
   .btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.18)}
   .btn-print{background:var(--navy);color:#fff}.btn-pdf{background:var(--green);color:#fff}
 
-  .cover{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);color:#fff;padding:48px 40px 36px;border-radius:10px;margin:0 0 28px 0;position:relative;overflow:hidden}
-  .cover::after{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:rgba(255,255,255,.04);border-radius:50%}
-  .cover-logo{font-size:11px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:8px}
-  .cover h1{font-size:26px;font-weight:800;letter-spacing:.5px;margin-bottom:8px;line-height:1.3}
-  .cover .subtitle{font-size:13px;opacity:.8;margin-bottom:20px}
+  /* Cover — compact */
+  .cover{background:linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);color:#fff;padding:24px 32px 20px;border-radius:10px;margin:0 0 14px 0;position:relative;overflow:hidden;page-break-after:avoid}
+  .cover::after{content:'';position:absolute;top:-60px;right:-60px;width:180px;height:180px;background:rgba(255,255,255,.04);border-radius:50%}
+  .cover-logo{font-size:10px;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:6px}
+  .cover h1{font-size:22px;font-weight:800;letter-spacing:.5px;margin-bottom:4px;line-height:1.25}
+  .cover .subtitle{font-size:12px;opacity:.8;margin-bottom:0}
 
-  .meta-bar{display:flex;flex-wrap:wrap;gap:20px 36px;padding:16px 20px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);margin-bottom:28px;font-size:11px;color:var(--gray-600)}
-  .meta-item{display:flex;flex-direction:column;gap:2px}
-  .meta-item .meta-label{font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:1px;font-size:9px}
-  .meta-item .meta-val{color:var(--gray-900);font-size:12px;font-weight:600}
+  /* Meta bar */
+  .meta-bar{display:flex;flex-wrap:wrap;gap:14px 32px;padding:10px 16px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);margin-bottom:14px;font-size:10px;color:var(--gray-600);page-break-inside:avoid}
+  .meta-item{display:flex;flex-direction:column;gap:1px}
+  .meta-item .meta-label{font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:1px;font-size:8px}
+  .meta-item .meta-val{color:var(--gray-900);font-size:11px;font-weight:600}
 
-  .sec{font-size:16px;font-weight:700;color:var(--navy);margin:36px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--gray-200);display:flex;align-items:center;gap:10px}
-  .sec .sec-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--navy);color:#fff;border-radius:6px;font-size:12px;font-weight:800;flex-shrink:0}
-  .card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:20px;margin-bottom:16px}
+  /* Section headings */
+  .sec{font-size:14px;font-weight:700;color:var(--navy);margin:16px 0 6px;padding-bottom:5px;border-bottom:2px solid var(--gray-200);display:flex;align-items:center;gap:8px;page-break-after:avoid}
+  .sec .sec-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--navy);color:#fff;border-radius:5px;font-size:11px;font-weight:800;flex-shrink:0}
+  .card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;margin-bottom:8px;page-break-inside:avoid}
 
-  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:10px;padding:18px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .15s}
-  .kpi-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
-  .kpi-icon{font-size:22px;line-height:1}
-  .kpi-label{font-size:10px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px}
-  .kpi-val{font-size:22px;font-weight:800;color:var(--navy);line-height:1.2}
-  .kpi-val small{font-size:11px;font-weight:500;color:var(--gray-600)}
+  /* KPI — 3-column grid */
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;page-break-inside:avoid}
+  .kpi-card{background:#fff;border:1px solid var(--gray-200);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .kpi-icon{font-size:17px;line-height:1}
+  .kpi-label{font-size:9px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.5px}
+  .kpi-val{font-size:18px;font-weight:800;color:var(--navy);line-height:1.15}
+  .kpi-val small{font-size:10px;font-weight:500;color:var(--gray-600)}
 
-  table{width:100%;border-collapse:collapse;font-size:11px}
-  thead th{background:var(--navy);color:#fff;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;text-align:left}
-  thead th:first-child{border-radius:6px 0 0 0}thead th:last-child{border-radius:0 6px 0 0}
-  tbody td{padding:9px 12px;border-bottom:1px solid var(--gray-100)}
+  /* Tables */
+  table{width:100%;border-collapse:collapse;font-size:10px;page-break-inside:avoid}
+  thead th{background:var(--navy);color:#fff;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left}
+  thead th:first-child{border-radius:5px 0 0 0}thead th:last-child{border-radius:0 5px 0 0}
+  tbody td{padding:7px 10px;border-bottom:1px solid var(--gray-100)}
   tbody tr:nth-child(even){background:var(--gray-50)}
-  tbody tr:hover{background:var(--blue-light)}
   .text-green{color:var(--green)}.text-red{color:var(--red)}.text-muted{color:var(--gray-400)}
 
-  .svg-wrap{display:flex;justify-content:center;background:#fff;border-radius:8px;padding:12px;overflow:hidden}
-  .svg-wrap svg{width:100%;height:auto;display:block}
+  /* SVG topology */
+  .svg-wrap{display:flex;justify-content:center;background:#fff;border-radius:6px;padding:8px;overflow:hidden;page-break-inside:avoid}
+  .svg-wrap svg{max-width:100%;height:auto;display:block}
 
-  .empty-state{text-align:center;padding:24px;color:var(--gray-400);font-style:italic}
+  /* Empty state */
+  .empty-state{text-align:center;padding:16px;color:var(--gray-400);font-style:italic}
 
-  .report-footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;font-size:9px;color:var(--gray-400)}
-  .disclaimer{margin-top:28px;padding:12px 16px;background:var(--gray-50);border-radius:6px;font-size:9px;color:var(--gray-400);text-align:center;line-height:1.5}
+  /* Footer & disclaimer */
+  .report-footer{margin-top:20px;padding-top:12px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;font-size:8px;color:var(--gray-400)}
+  .disclaimer{margin-top:14px;padding:10px 14px;background:var(--gray-50);border-radius:6px;font-size:8px;color:var(--gray-400);text-align:center;line-height:1.4}
 
   @media print {
     body{font-size:10pt;padding:0}
     #report-content{padding:0}
     .no-print{display:none !important}
-    .cover{margin:0;padding:36px 24px 28px;page-break-after:avoid;border-radius:0}
+    .cover{margin:0;padding:24px 20px 20px;page-break-after:avoid;border-radius:0}
     .sec{page-break-after:avoid}
     .card{page-break-inside:avoid}
     .kpi-grid{page-break-inside:avoid}
     table{page-break-inside:avoid}
-    @page{size:A4;margin:16mm 14mm}
+    @page{size:A4;margin:14mm 12mm}
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
