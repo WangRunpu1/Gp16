@@ -255,11 +255,53 @@ async function callLLMForCommentary(payload: { topology: any; analysis: any; lan
   }
 }
 
+// ── Server-side analysis (fallback when frontend data not yet available) ─────────
+function computeAnalysis(topology: { nodes: any[] }, cfg: Record<string, number> = {}): {
+  summary: { pvInstalledKw: number; inverterKw: number; battKwh: number; annualGenerationKwh: number; annualCo2SavedTons: number; equivalentTrees: number; totalCapex: number };
+  costSeries: { year: number; traditionalCost: number; schemeCost: number }[];
+  simplePaybackYears: number | null;
+} {
+  const c = {
+    electricityPricePerKwh: cfg.electricityPricePerKwh ?? 0.85,
+    fullLoadHoursPerYear: cfg.fullLoadHoursPerYear ?? 1200,
+    gridEmissionFactor: cfg.gridEmissionFactor ?? 0.55,
+    performanceRatio: cfg.performanceRatio ?? 0.8,
+    pvUnitCostPerKw: cfg.pvUnitCostPerKw ?? 900,
+    inverterUnitCostPerKw: cfg.inverterUnitCostPerKw ?? 150,
+    battUnitCostPerKwh: cfg.battUnitCostPerKwh ?? 400,
+  };
+  const nodes = topology.nodes ?? [];
+  const pvKw = nodes.filter((n: any) => n.data?.deviceType === 'pv_panel').reduce((s: number, n: any) => s + (n.data?.ratedPowerKw ?? 0), 0);
+  const invKw = nodes.filter((n: any) => n.data?.deviceType === 'inverter').reduce((s: number, n: any) => s + (n.data?.ratedPowerKw ?? 0), 0);
+  const battKwh = nodes.filter((n: any) => n.data?.deviceType === 'battery').reduce((s: number, n: any) => s + (n.data?.capacityKwh ?? 0), 0);
+  const annualGen = pvKw * c.fullLoadHoursPerYear * c.performanceRatio;
+  const annualCo2 = (annualGen * c.gridEmissionFactor) / 1000;
+  const trees = Math.round(annualCo2 * 50);
+  const capex = pvKw * c.pvUnitCostPerKw + invKw * c.inverterUnitCostPerKw + battKwh * c.battUnitCostPerKwh;
+  const saving = annualGen * c.electricityPricePerKwh;
+  const payback = saving > 0 ? capex / saving : null;
+  const maint = pvKw * 20;
+  const series = Array.from({ length: 10 }, (_, i) => {
+    const y = i + 1;
+    return { year: y, traditionalCost: Math.round(y * saving), schemeCost: Math.round(capex + y * maint) };
+  });
+  return {
+    summary: { pvInstalledKw: pvKw, inverterKw: invKw, battKwh, annualGenerationKwh: annualGen, annualCo2SavedTons: annualCo2, equivalentTrees: trees, totalCapex: capex },
+    costSeries: series,
+    simplePaybackYears: payback,
+  };
+}
+
 // ── HTML Report (bilingual + html2pdf.js) ─────────────────────────────────────
 async function generateReport(payload: any): Promise<{ reportId: string; htmlPath: string }> {
   const reportId  = String(payload.reportId ?? payload.taskId ?? Date.now());
   const topology  = payload.topology  ?? { nodes: [], edges: [] };
-  const analysis  = payload.analysis  ?? null;
+  let analysis  = payload.analysis  ?? null;
+  const config   = payload.config   ?? {};
+  // Compute analysis server-side if frontend hasn't provided it (avoids race with debounced hook)
+  if (!analysis && topology?.nodes?.length) {
+    analysis = computeAnalysis(topology, config);
+  }
   const lang: 'zh' | 'en' = payload.lang === 'en' ? 'en' : 'zh';
   const svg = topologyToSvg(topology, lang);
   const commentary = await callLLMForCommentary({ topology, analysis, lang });

@@ -3,6 +3,7 @@ import { FilePdfOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
+import { useConfigStore } from '@/state/configStore';
 import { postJson, apiFetch, getToken } from '@/api/client';
 import { useDebouncedAnalysis } from '@/hooks/useDebouncedAnalysis';
 
@@ -10,6 +11,7 @@ export function ReportButton() {
   const { t, i18n } = useTranslation();
   const nodes = useTopologyStore((s) => s.nodes);
   const edges = useTopologyStore((s) => s.edges);
+  const config = useConfigStore((s) => s.config);
   const { data: analysis } = useDebouncedAnalysis(1200);
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +19,7 @@ export function ReportButton() {
     setLoading(true);
     try {
       const { taskId } = await postJson<{ taskId: string }>('/api/reports', {
-        topology: { nodes, edges }, analysis,
+        topology: { nodes, edges }, analysis, config,
         lang: i18n.language?.startsWith('zh') ? 'zh' : 'en',
       });
 
