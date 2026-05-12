@@ -3,7 +3,7 @@ import { FilePdfOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTopologyStore } from '@/state/topologyStore';
-import { postJson, apiFetch } from '@/api/client';
+import { postJson, apiFetch, getToken } from '@/api/client';
 import { useDebouncedAnalysis } from '@/hooks/useDebouncedAnalysis';
 
 export function ReportButton() {
@@ -27,7 +27,15 @@ export function ReportButton() {
           `/api/reports/${taskId}`
         );
         if (res.state === 'completed' && res.downloadUrl) {
-          window.open(res.downloadUrl, '_blank');
+          const token = getToken();
+          const htmlRes = await fetch(res.downloadUrl, {
+            headers: token ? { authorization: `Bearer ${token}` } : {},
+          });
+          if (!htmlRes.ok) throw new Error(`HTTP ${htmlRes.status}`);
+          const html = await htmlRes.text();
+          const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+          const blobUrl = URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
           return;
         }
         if (res.state === 'failed') throw new Error(res.failedReason ?? 'failed');
