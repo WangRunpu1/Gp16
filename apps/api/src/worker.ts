@@ -424,7 +424,8 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
   /* Section headings */
   .sec{font-size:14px;font-weight:700;color:var(--navy);margin:16px 0 6px;padding-bottom:5px;border-bottom:2px solid var(--gray-200);display:flex;align-items:center;gap:8px;page-break-after:avoid}
   .sec .sec-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--navy);color:#fff;border-radius:5px;font-size:11px;font-weight:800;flex-shrink:0}
-  .card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;margin-bottom:8px;page-break-inside:avoid}
+  .card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;margin-bottom:0;page-break-inside:avoid}
+  .section-block{page-break-inside:avoid;margin-bottom:14px}
 
   /* KPI — 3-column grid */
   .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;page-break-inside:avoid}
@@ -444,7 +445,7 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
 
   /* SVG topology */
   .svg-wrap{display:flex;justify-content:center;background:#fff;border-radius:6px;padding:8px;overflow:hidden;page-break-inside:avoid}
-  .svg-wrap svg{max-width:100%;height:auto;display:block}
+  .svg-wrap svg{max-width:100%;max-height:480px;height:auto;display:block}
 
   /* Empty state */
   .empty-state{text-align:center;padding:16px;color:var(--gray-400);font-style:italic}
@@ -473,6 +474,7 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
   </div>
   <div id="report-content">
 
+    <div class="section-block">
     <!-- COVER -->
     <div class="cover">
       <div class="cover-logo">GP16</div>
@@ -487,32 +489,43 @@ async function generateReport(payload: any): Promise<{ reportId: string; htmlPat
       <div class="meta-item"><span class="meta-label">${L.preparedBy}</span><span class="meta-val">${L.preparedVal}</span></div>
       <div class="meta-item"><span class="meta-label">${lang === 'zh' ? '设备数量' : 'Devices'}</span><span class="meta-val">${nodeCount} ${lang === 'zh' ? '台设备' : 'devices'}, ${edgeCount} ${lang === 'zh' ? '条连接' : 'connections'}</span></div>
     </div>
+    </div>
 
+    <div class="section-block">
     <!-- 1. OVERVIEW -->
     <div class="sec"><span class="sec-num">1</span>${L.secOverview}</div>
     <div class="card">${commentaryHtml}</div>
+    </div>
 
+    <div class="section-block">
     <!-- 2. TOPOLOGY -->
     <div class="sec"><span class="sec-num">2</span>${L.secTopo}</div>
     <div class="card"><div class="svg-wrap">${svg}</div></div>
+    </div>
 
+    <div class="section-block">
     <!-- 3. KPI -->
     <div class="sec"><span class="sec-num">3</span>${L.secKpi}</div>
     <div class="card">${kpiHtml}</div>
+    </div>
 
+    <div class="section-block">
     <!-- 4. DEVICE LIST -->
     <div class="sec"><span class="sec-num">4</span>${L.secDevices}</div>
     <div class="card">
       <table><thead><tr><th>${L.thName}</th><th>${L.thType}</th><th>${L.thPower}</th><th>${L.thCapacity}</th></tr></thead>
       <tbody>${deviceRows||`<tr><td colspan="4" class="empty-state">${L.noDevices}</td></tr>`}</tbody></table>
     </div>
+    </div>
 
     <!-- 5. COST -->
     ${costSeries.length?`
+    <div class="section-block">
     <div class="sec"><span class="sec-num">5</span>${L.secCost}</div>
     <div class="card">
       <table><thead><tr><th>${L.thYear}</th><th>${L.thTraditional}</th><th>${L.thScheme}</th><th>${L.thSavings}</th></tr></thead>
       <tbody>${costRows}</tbody></table>
+    </div>
     </div>`:''}
 
     <!-- DISCLAIMER -->
