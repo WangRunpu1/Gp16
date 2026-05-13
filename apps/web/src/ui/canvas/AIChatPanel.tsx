@@ -29,7 +29,7 @@ interface Props {
 }
 
 export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const inputRef = useRef<any>(null);
 
   const QUICK_SCENARIOS = [
@@ -208,8 +208,11 @@ export function AIChatPanel({ agentMode = 'plan', onModeChange }: Props) {
     onModeChange?.('agent');
 
     // Build a prompt that includes the plan's design scheme as context
+    const isZh = i18n.language?.startsWith('zh');
     const agentPrompt = scheme
-      ? `按照以下设计方案生成光伏系统拓扑布局：\n\n${scheme}\n\n原始需求：${userRequest}`
+      ? isZh
+        ? `按照以下设计方案生成光伏系统拓扑布局：\n\n${scheme}\n\n原始需求：${userRequest}`
+        : `Generate a PV system topology layout based on the following design scheme:\n\n${scheme}\n\nOriginal requirements: ${userRequest}`
       : userRequest;
 
     // Reset conversation — new agent-mode conversation

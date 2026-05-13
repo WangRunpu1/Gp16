@@ -219,12 +219,16 @@ async function callLLMForCommentary(payload: { topology: any; analysis: any; lan
   const analysis = payload.analysis ?? {};
 
   const nodeList = (topology.nodes ?? []).map((n: any) =>
-    `- ${n.data?.label ?? n.id} (${n.data?.deviceType ?? 'unknown'}${n.data?.ratedPowerKw ? `, ${n.data.ratedPowerKw}kW` : ''}${n.data?.capacityKwh ? `, ${n.data.capacityKwh}kWh` : ''})`
+    isZh
+      ? `- ${n.data?.label ?? n.id}（${n.data?.deviceType ?? '未知'}${n.data?.ratedPowerKw ? `，${n.data.ratedPowerKw}kW` : ''}${n.data?.capacityKwh ? `，${n.data.capacityKwh}kWh` : ''}）`
+      : `- ${n.data?.label ?? n.id} (${n.data?.deviceType ?? 'unknown'}${n.data?.ratedPowerKw ? `, ${n.data.ratedPowerKw}kW` : ''}${n.data?.capacityKwh ? `, ${n.data.capacityKwh}kWh` : ''})`
   ).join('\n');
 
   const s = analysis?.summary;
   const kpiText = s
-    ? `PV ${s.pvInstalledKw}kW, Annual Gen ${s.annualGenerationKwh}kWh, CO₂ Saved ${s.annualCo2SavedTons}t/yr, Trees ${s.equivalentTrees}, CAPEX ¥${s.totalCapex}, Payback ${analysis?.simplePaybackYears}yr`
+    ? isZh
+      ? `光伏装机 ${s.pvInstalledKw}kW，年发电量 ${s.annualGenerationKwh}kWh，年减排 CO₂ ${s.annualCo2SavedTons}吨，等效植树 ${s.equivalentTrees}棵，总投资 ¥${s.totalCapex}，回收期 ${analysis?.simplePaybackYears}年`
+      : `PV ${s.pvInstalledKw}kW, Annual Gen ${s.annualGenerationKwh}kWh, CO₂ Saved ${s.annualCo2SavedTons}t/yr, Trees ${s.equivalentTrees}, CAPEX ¥${s.totalCapex}, Payback ${analysis?.simplePaybackYears}yr`
     : '';
 
   const system = isZh

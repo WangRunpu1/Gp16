@@ -351,8 +351,9 @@ export async function runAgentLoop(
     .join('\n');
 
   const lang = isZh(userInput) ? 'zh' as const : 'en' as const;
-  const langLabel = lang === 'zh' ? 'Chinese' : 'English';
-  const prompt = `Current canvas: ${currentTopology ? `${currentTopology.nodes.length} devices, ${currentTopology.edges.length} connections` : 'Empty canvas'}\nConversation language: ${langLabel}\n\nHistory:\n${historyText}\n\nUser: ${userInput}`;
+  const prompt = lang === 'zh'
+    ? `当前画布：${currentTopology ? `${currentTopology.nodes.length} 台设备，${currentTopology.edges.length} 条连接` : '空白画布'}\n对话语言：中文\n\n历史记录：\n${historyText}\n\n用户：${userInput}`
+    : `Current canvas: ${currentTopology ? `${currentTopology.nodes.length} devices, ${currentTopology.edges.length} connections` : 'Empty canvas'}\nConversation language: English\n\nHistory:\n${historyText}\n\nUser: ${userInput}`;
 
   // Try LLM first
   let llmMessages: AgentMessage[] | null = null;
